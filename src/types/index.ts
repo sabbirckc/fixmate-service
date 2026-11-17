@@ -30,6 +30,7 @@ export interface User {
   email: string
   image?: string | null
   role: Role
+  plan?: 'free' | 'pro'
   phone?: string | null
   area?: string | null
   bio?: string | null
@@ -50,6 +51,8 @@ export interface Service {
   technicianEmail: string
   approvalStatus: ApprovalStatus
   isAvailable: boolean
+  ratingAvg?: number
+  reviewCount?: number
   createdAt: string
   updatedAt?: string
 }
@@ -78,6 +81,9 @@ export interface Booking {
   status: JobStatus
   finalAmount: number
   paymentStatus: PaymentStatus
+  rating?: number
+  review?: string
+  reviewedAt?: string | Date
   createdAt: string
   updatedAt?: string
   statusHistory?: StatusHistoryItem[]

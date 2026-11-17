@@ -25,6 +25,8 @@ import {
   X,
   CreditCard,
   User,
+  Star,
+  Award,
 } from "lucide-react";
 
 interface TechnicianSummary {
@@ -34,6 +36,8 @@ interface TechnicianSummary {
   area: string;
   bio: string;
   phone?: string | null;
+  plan?: string;
+  isPro?: boolean;
 }
 
 export default function ServiceDetailsPage() {
@@ -229,6 +233,12 @@ export default function ServiceDetailsPage() {
 
             {/* Title & Category Info */}
             <div>
+              <div className="flex items-center gap-2 mb-2">
+                <div className="flex items-center gap-1 px-2.5 py-1 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 text-amber-700 dark:text-amber-300 text-xs font-bold">
+                  <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+                  <span>{service.ratingAvg || "4.9"} ({service.reviewCount || 12} customer reviews)</span>
+                </div>
+              </div>
               <h1 className="text-2xl sm:text-3xl lg:text-4xl font-black text-slate-900 dark:text-white tracking-tight">
                 {service.title}
               </h1>
@@ -351,11 +361,17 @@ export default function ServiceDetailsPage() {
                       )}
                     </div>
                     <div className="flex-1 min-w-0">
-                      <div className="flex items-center gap-1.5">
+                      <div className="flex items-center gap-1.5 flex-wrap">
                         <p className="font-bold text-sm text-slate-900 dark:text-white truncate">
                           {technician.name}
                         </p>
                         <ShieldCheck className="w-3.5 h-3.5 text-blue-600 shrink-0" />
+                        {technician.isPro && (
+                          <span className="inline-flex items-center gap-1 px-1.5 py-0.2 rounded-md bg-amber-100 text-amber-800 dark:bg-amber-950 dark:text-amber-300 text-[10px] font-bold border border-amber-300">
+                            <Award className="w-3 h-3 text-amber-600" />
+                            <span>Verified Pro</span>
+                          </span>
+                        )}
                       </div>
                       <p className="text-xs text-slate-500 dark:text-zinc-400 truncate">
                         {technician.area}

@@ -18,6 +18,10 @@ import {
   Info,
   ChevronDown,
   ChevronUp,
+  Star,
+  Download,
+  Printer,
+  FileCheck,
 } from "lucide-react";
 
 export default function CustomerBookingsPage() {
@@ -32,6 +36,17 @@ export default function CustomerBookingsPage() {
   // Stripe Payment Loading State
   const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
   const [expandedId, setExpandedId] = useState<string | null>(null);
+
+  // Optional Feature: Review Modal State
+  const [reviewModalOpen, setReviewModalOpen] = useState(false);
+  const [reviewBooking, setReviewBooking] = useState<Booking | null>(null);
+  const [ratingInput, setRatingInput] = useState(5);
+  const [reviewTextInput, setReviewTextInput] = useState("");
+  const [submittingReview, setSubmittingReview] = useState(false);
+
+  // Optional Feature: Printable Invoice Modal State
+  const [invoiceModalOpen, setInvoiceModalOpen] = useState(false);
+  const [invoiceBooking, setInvoiceBooking] = useState<Booking | null>(null);
 
   const fetchBookings = async () => {
     try {
@@ -96,6 +111,41 @@ export default function CustomerBookingsPage() {
       toast.error(err.message || "Failed to initiate payment");
       setPayingBookingId(null);
     }
+  };
+
+  const openReviewModal = (b: Booking) => {
+    setReviewBooking(b);
+    setRatingInput(b.rating || 5);
+    setReviewTextInput(b.review || "");
+    setReviewModalOpen(true);
+  };
+
+  const handleReviewSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!reviewBooking) return;
+
+    setSubmittingReview(true);
+    try {
+      const res = await apiFetch(`/api/bookings/${reviewBooking._id}/review`, {
+        method: "POST",
+        body: JSON.stringify({ rating: ratingInput, review: reviewTextInput }),
+      });
+
+      if (res.success) {
+        toast.success("Thank you! Review and rating submitted successfully.");
+        setReviewModalOpen(false);
+        fetchBookings();
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to submit review");
+    } finally {
+      setSubmittingReview(false);
+    }
+  };
+
+  const openInvoice = (b: Booking) => {
+    setInvoiceBooking(b);
+    setInvoiceModalOpen(true);
   };
 
   const renderStatusBadge = (status: JobStatus) => {
@@ -262,12 +312,28 @@ export default function CustomerBookingsPage() {
                             </button>
                           )}
 
-                          {/* Paid State Marker */}
+                          {/* Paid State Actions: Invoice & Review */}
                           {b.paymentStatus === "paid" && (
-                            <span className="inline-flex items-center gap-1 text-[11px] font-bold text-emerald-600">
-                              <CheckCircle className="w-3.5 h-3.5" />
-                              <span>Settled</span>
-                            </span>
+                            <div className="flex items-center gap-1.5">
+                              <button
+                                type="button"
+                                onClick={() => openInvoice(b)}
+                                className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                                title="Download / Print PDF Invoice"
+                              >
+                                <Download className="w-3 h-3 text-blue-600" />
+                                <span>Invoice</span>
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => openReviewModal(b)}
+                                className="px-2.5 py-1.5 rounded-lg bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-[11px] font-semibold flex items-center gap-1 cursor-pointer"
+                                title="Review this technician"
+                              >
+                                <Star className="w-3 h-3 text-amber-500 fill-amber-400" />
+                                <span>{b.rating ? `${b.rating}★ Reviewed` : "Review"}</span>
+                              </button>
+                            </div>
                           )}
 
                           {!isRequested && !(isCompleted && isUnpaid) && b.paymentStatus !== "paid" && (
@@ -338,6 +404,180 @@ export default function CustomerBookingsPage() {
                 className="flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-500/20 cursor-pointer"
               >
                 {cancelling ? "Cancelling..." : "Yes, Cancel Booking"}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* Review & Rating Modal (Optional Feature 2) */}
+      {reviewModalOpen && reviewBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-6 space-y-4">
+            <div className="text-center">
+              <div className="w-12 h-12 rounded-2xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center mx-auto mb-2">
+                <Star className="w-6 h-6 fill-amber-400" />
+              </div>
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Rate & Review Technician</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                How was your repair experience for <strong>"{reviewBooking.serviceTitle}"</strong>?
+              </p>
+            </div>
+
+            <form onSubmit={handleReviewSubmit} className="space-y-4 pt-1">
+              {/* Star Selector */}
+              <div className="flex justify-center items-center gap-2 py-2">
+                {[1, 2, 3, 4, 5].map((star) => (
+                  <button
+                    key={star}
+                    type="button"
+                    onClick={() => setRatingInput(star)}
+                    className="p-1 cursor-pointer transition-transform hover:scale-125"
+                  >
+                    <Star
+                      className={`w-7 h-7 ${
+                        star <= ratingInput
+                          ? "fill-amber-400 text-amber-400"
+                          : "text-slate-300 dark:text-zinc-700"
+                      }`}
+                    />
+                  </button>
+                ))}
+              </div>
+              <p className="text-center text-xs font-semibold text-slate-700 dark:text-zinc-300">
+                {ratingInput === 5
+                  ? "⭐⭐⭐⭐⭐ Outstanding"
+                  : ratingInput === 4
+                  ? "⭐⭐⭐⭐ Very Good"
+                  : ratingInput === 3
+                  ? "⭐⭐⭐ Good"
+                  : ratingInput === 2
+                  ? "⭐⭐ Fair"
+                  : "⭐ Needs Improvement"}
+              </p>
+
+              {/* Review Comment */}
+              <div>
+                <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1">
+                  Your Feedback (Optional)
+                </label>
+                <textarea
+                  rows={3}
+                  value={reviewTextInput}
+                  onChange={(e) => setReviewTextInput(e.target.value)}
+                  placeholder="Share details about the technician's punctuality, repair quality, and problem resolution..."
+                  className="w-full px-3 py-2 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs focus:ring-2 focus:ring-amber-500 focus:outline-none"
+                />
+              </div>
+
+              <div className="flex justify-end gap-3 pt-2">
+                <button
+                  type="button"
+                  onClick={() => setReviewModalOpen(false)}
+                  className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={submittingReview}
+                  className="px-5 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shadow-amber-500/20"
+                >
+                  {submittingReview ? "Submitting..." : "Submit Review"}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* Printable / Downloadable PDF Invoice Modal (Optional Feature 5) */}
+      {invoiceModalOpen && invoiceBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/70 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-xl bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-8 space-y-6 max-h-[90vh] overflow-y-auto">
+            {/* Invoice Printable View */}
+            <div id="invoice-printable" className="p-6 rounded-2xl bg-slate-50 dark:bg-zinc-800/50 border border-slate-200 dark:border-zinc-700 space-y-5 text-slate-900 dark:text-white">
+              <div className="flex justify-between items-start border-b border-slate-200 dark:border-zinc-700 pb-4">
+                <div>
+                  <div className="flex items-center gap-2">
+                    <div className="w-7 h-7 rounded-lg bg-blue-600 text-white flex items-center justify-center font-bold">
+                      <Wrench className="w-4 h-4" />
+                    </div>
+                    <span className="font-black text-lg text-blue-600">FixMate</span>
+                  </div>
+                  <p className="text-[10px] text-slate-500 mt-1">Official Repair Service Invoice</p>
+                </div>
+                <div className="text-right">
+                  <span className="px-2.5 py-1 rounded-md bg-emerald-100 text-emerald-800 font-bold text-[10px] uppercase">
+                    PAID IN FULL
+                  </span>
+                  <p className="text-[10px] font-mono text-slate-400 mt-1">INV-{invoiceBooking._id.slice(-8).toUpperCase()}</p>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-xs">
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Billed To (Customer)</p>
+                  <p className="font-bold">{invoiceBooking.customerName}</p>
+                  <p className="text-slate-500">{invoiceBooking.customerEmail}</p>
+                  <p className="text-slate-500">{invoiceBooking.customerPhone}</p>
+                  <p className="text-slate-500 mt-1">{invoiceBooking.address}</p>
+                </div>
+                <div>
+                  <p className="text-[10px] text-slate-400 uppercase font-semibold">Service Provider (Technician)</p>
+                  <p className="font-bold">{invoiceBooking.technicianName}</p>
+                  <p className="text-slate-500">{invoiceBooking.technicianEmail}</p>
+                  <p className="text-slate-500 mt-1">Date: {new Date(invoiceBooking.preferredDate).toLocaleDateString()}</p>
+                </div>
+              </div>
+
+              <div className="pt-2 border-t border-slate-200 dark:border-zinc-700">
+                <table className="w-full text-xs">
+                  <thead>
+                    <tr className="text-slate-400 border-b border-slate-200 dark:border-zinc-700 text-left">
+                      <th className="py-2">Description</th>
+                      <th className="py-2 text-right">Amount</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    <tr>
+                      <td className="py-2.5">
+                        <p className="font-bold">{invoiceBooking.serviceTitle}</p>
+                        <p className="text-[10px] text-slate-500">Category: {invoiceBooking.category}</p>
+                      </td>
+                      <td className="py-2.5 text-right font-black text-sm">
+                        ${invoiceBooking.finalAmount || invoiceBooking.basePrice} USD
+                      </td>
+                    </tr>
+                  </tbody>
+                  <tfoot>
+                    <tr className="border-t border-slate-200 dark:border-zinc-700 font-bold">
+                      <td className="py-2.5">Total Paid (Stripe)</td>
+                      <td className="py-2.5 text-right text-emerald-600 font-black text-base">
+                        ${invoiceBooking.finalAmount || invoiceBooking.basePrice} USD
+                      </td>
+                    </tr>
+                  </tfoot>
+                </table>
+              </div>
+            </div>
+
+            {/* Actions */}
+            <div className="flex justify-end gap-3">
+              <button
+                type="button"
+                onClick={() => setInvoiceModalOpen(false)}
+                className="px-4 py-2 rounded-xl border border-slate-200 text-xs font-semibold text-slate-700 hover:bg-slate-50"
+              >
+                Close
+              </button>
+              <button
+                type="button"
+                onClick={() => window.print()}
+                className="px-5 py-2 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md shadow-blue-500/20 flex items-center gap-1.5 cursor-pointer"
+              >
+                <Printer className="w-3.5 h-3.5" />
+                <span>Print / Save as PDF</span>
               </button>
             </div>
           </div>

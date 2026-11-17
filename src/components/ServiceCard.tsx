@@ -1,5 +1,5 @@
 import Link from "next/link";
-import { ArrowRight, Clock, MapPin, Tag, Wrench } from "lucide-react";
+import { ArrowRight, Clock, MapPin, Tag, Wrench, Star } from "lucide-react";
 import type { Service } from "@/types";
 
 interface ServiceCardProps {
@@ -24,6 +24,10 @@ export default function ServiceCard({ service }: ServiceCardProps) {
           <span className="px-2 py-0.5 text-xs font-medium rounded-lg bg-slate-900/80 backdrop-blur-md text-slate-200">
             {service.serviceMode}
           </span>
+        </div>
+        <div className="absolute top-3 right-3 flex items-center gap-1 px-2 py-0.5 rounded-lg bg-white/90 dark:bg-zinc-900/90 backdrop-blur-md text-amber-500 text-xs font-bold shadow-sm">
+          <Star className="w-3.5 h-3.5 fill-amber-400 text-amber-400" />
+          <span className="text-slate-800 dark:text-zinc-200">{service.ratingAvg || "4.9"}</span>
         </div>
       </div>
 

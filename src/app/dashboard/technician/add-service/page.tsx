@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api-client";
@@ -18,6 +18,8 @@ import {
   Loader2,
   CheckCircle,
   Wrench,
+  Sparkles,
+  ShieldAlert,
 } from "lucide-react";
 
 const CATEGORIES: ServiceCategory[] = [
@@ -49,6 +51,42 @@ export default function AddServicePage() {
   const [imageFile, setImageFile] = useState<File | null>(null);
   const [imagePreview, setImagePreview] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
+
+  // Pro Plan check
+  const [isPro, setIsPro] = useState(false);
+  const [serviceCount, setServiceCount] = useState(0);
+  const [upgrading, setUpgrading] = useState(false);
+
+  useEffect(() => {
+    const checkLimits = async () => {
+      try {
+        const [servicesRes, profileRes] = await Promise.all([
+          apiFetch("/api/services/technician/my"),
+          apiFetch("/api/users/profile"),
+        ]);
+        if (servicesRes.success) setServiceCount(servicesRes.services?.length || 0);
+        if (profileRes.success && profileRes.user?.plan === "pro") setIsPro(true);
+      } catch (err) {
+        console.error("Plan check failed:", err);
+      }
+    };
+    checkLimits();
+  }, []);
+
+  const handleUpgradePro = async () => {
+    setUpgrading(true);
+    try {
+      const res = await apiFetch("/api/users/upgrade-pro", { method: "POST" });
+      if (res.success) {
+        toast.success(res.message || "Upgraded to Verified Pro plan!");
+        setIsPro(true);
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upgrade to Pro");
+    } finally {
+      setUpgrading(false);
+    }
+  };
 
   const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -130,6 +168,32 @@ export default function AddServicePage() {
           Create a verified repair listing. Once approved by an Admin, it will be published to the public catalog.
         </p>
       </div>
+
+      {/* Free tier limit reached banner */}
+      {!isPro && serviceCount >= 3 && (
+        <div className="p-5 rounded-2xl bg-amber-50 dark:bg-amber-950/30 border border-amber-300 dark:border-amber-800 flex flex-col sm:flex-row sm:items-center justify-between gap-4">
+          <div className="flex items-start gap-3">
+            <ShieldAlert className="w-5 h-5 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="text-sm font-bold text-amber-900 dark:text-amber-200">
+                Free Plan Limit Reached (3 of 3 Services Listed)
+              </h4>
+              <p className="text-xs text-amber-800 dark:text-amber-300/90 mt-0.5">
+                Free accounts can list up to 3 repair services. Upgrade to Verified Pro for unlimited listings, gold badge, and priority ranking.
+              </p>
+            </div>
+          </div>
+          <button
+            type="button"
+            disabled={upgrading}
+            onClick={handleUpgradePro}
+            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer disabled:opacity-50"
+          >
+            <Sparkles className="w-4 h-4" />
+            <span>{upgrading ? "Upgrading..." : "Upgrade to Pro ($29)"}</span>
+          </button>
+        </div>
+      )}
 
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">

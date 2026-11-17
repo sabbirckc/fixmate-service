@@ -13,35 +13,60 @@ import {
   ClipboardList,
   FolderOpen,
   Loader2,
+  Sparkles,
+  ShieldCheck,
+  Check,
 } from "lucide-react";
+import { toast } from "sonner";
 
 export default function TechnicianOverviewPage() {
   const [services, setServices] = useState<Service[]>([]);
   const [bookings, setBookings] = useState<Booking[]>([]);
+  const [profile, setProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
+  const [upgrading, setUpgrading] = useState(false);
+
+  const fetchData = async () => {
+    try {
+      const [servicesRes, bookingsRes, profileRes] = await Promise.all([
+        apiFetch("/api/services/technician/my"),
+        apiFetch("/api/bookings/technician"),
+        apiFetch("/api/users/profile"),
+      ]);
+
+      if (servicesRes.success) setServices(servicesRes.services || []);
+      if (bookingsRes.success) setBookings(bookingsRes.bookings || []);
+      if (profileRes.success) setProfile(profileRes.user || null);
+    } catch (err) {
+      console.error("Failed to load technician overview data:", err);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
-    const fetchData = async () => {
-      try {
-        const [servicesRes, bookingsRes] = await Promise.all([
-          apiFetch("/api/services/technician/my"),
-          apiFetch("/api/bookings/technician"),
-        ]);
-
-        if (servicesRes.success) setServices(servicesRes.services || []);
-        if (bookingsRes.success) setBookings(bookingsRes.bookings || []);
-      } catch (err) {
-        console.error("Failed to load technician overview data:", err);
-      } finally {
-        setLoading(false);
-      }
-    };
     fetchData();
   }, []);
 
+  const isPro = profile?.plan === "pro";
   const totalServices = services.length;
   const approvedServices = services.filter((s) => s.approvalStatus === "approved").length;
   const pendingRequests = bookings.filter((b) => b.status === "requested").length;
+
+  const handleUpgradePro = async () => {
+    setUpgrading(true);
+    try {
+      const res = await apiFetch("/api/users/upgrade-pro", { method: "POST" });
+      if (res.success) {
+        toast.success(res.message || "Upgraded to Verified Pro plan!");
+        setProfile((prev: any) => ({ ...prev, plan: "pro" }));
+      }
+    } catch (err: any) {
+      toast.error(err.message || "Failed to upgrade to Pro plan");
+    } finally {
+      setUpgrading(false);
+    }
+  };
 
   return (
     <div className="space-y-8">
@@ -97,6 +122,50 @@ export default function TechnicianOverviewPage() {
             <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Requests</p>
             <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{pendingRequests}</p>
           </div>
+        </div>
+      </div>
+
+      {/* Pro Plan Status Banner (Optional Feature 1) */}
+      <div className={`p-6 rounded-3xl border transition-all ${
+        isPro
+          ? "bg-gradient-to-r from-amber-500/10 via-orange-500/10 to-amber-500/5 border-amber-300 dark:border-amber-700/50"
+          : "bg-white dark:bg-zinc-900 border-slate-200 dark:border-zinc-800"
+      }`}>
+        <div className="flex flex-col md:flex-row md:items-center justify-between gap-5">
+          <div className="space-y-1.5">
+            <div className="flex items-center gap-2">
+              {isPro ? (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-gradient-to-r from-amber-500 to-orange-500 text-white text-xs font-black uppercase tracking-wider shadow-sm">
+                  <ShieldCheck className="w-3.5 h-3.5" />
+                  Verified Pro Technician
+                </span>
+              ) : (
+                <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-slate-100 dark:bg-zinc-800 text-slate-700 dark:text-zinc-300 text-xs font-bold uppercase tracking-wider">
+                  Free Technician Plan
+                </span>
+              )}
+              <span className="text-xs text-slate-500 font-medium">
+                {isPro ? "Unlimited Listings Active" : `Listing Quota: ${totalServices}/3 services used`}
+              </span>
+            </div>
+            <p className="text-sm text-slate-700 dark:text-zinc-300 font-medium">
+              {isPro
+                ? "You have full Verified Pro privileges: unlimited repair service listings, gold verified badge on public cards, and priority customer visibility."
+                : "Free technicians are limited to listing 3 services. Upgrade to FixMate Verified Pro to unlock unlimited listings, verified gold badge, and priority customer reach."}
+            </p>
+          </div>
+
+          {!isPro && (
+            <button
+              type="button"
+              disabled={upgrading}
+              onClick={handleUpgradePro}
+              className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs shadow-lg shadow-amber-500/20 shrink-0 cursor-pointer disabled:opacity-50"
+            >
+              <Sparkles className="w-4 h-4 text-amber-200" />
+              <span>{upgrading ? "Upgrading..." : "Upgrade to Pro ($29)"}</span>
+            </button>
+          )}
         </div>
       </div>
 
