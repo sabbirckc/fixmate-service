@@ -1,10 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, Fragment } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import type { Booking, JobStatus } from "@/types";
 import { toast } from "sonner";
+import StatusTimeline from "@/components/StatusTimeline";
 import {
   Calendar,
   CreditCard,
@@ -15,6 +16,8 @@ import {
   CheckCircle,
   ExternalLink,
   Info,
+  ChevronDown,
+  ChevronUp,
 } from "lucide-react";
 
 export default function CustomerBookingsPage() {
@@ -28,6 +31,7 @@ export default function CustomerBookingsPage() {
 
   // Stripe Payment Loading State
   const [payingBookingId, setPayingBookingId] = useState<string | null>(null);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const fetchBookings = async () => {
     try {
@@ -157,7 +161,8 @@ export default function CustomerBookingsPage() {
                   const isRequested = b.status === "requested";
 
                   return (
-                    <tr key={b._id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                    <Fragment key={b._id}>
+                      <tr className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
                       {/* Service info */}
                       <td className="py-4 px-5">
                         <div className="flex items-center gap-3">
@@ -221,6 +226,14 @@ export default function CustomerBookingsPage() {
                       {/* Actions */}
                       <td className="py-4 px-5 text-right">
                         <div className="flex items-center justify-end gap-2">
+                          <button
+                            type="button"
+                            onClick={() => setExpandedId(expandedId === b._id ? null : b._id)}
+                            className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-500 hover:text-blue-600 text-xs cursor-pointer"
+                            title="Toggle Step Tracker"
+                          >
+                            {expandedId === b._id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                          </button>
                           {/* Cancel button: ONLY when requested */}
                           {isRequested && (
                             <button
@@ -263,7 +276,23 @@ export default function CustomerBookingsPage() {
                         </div>
                       </td>
                     </tr>
-                  );
+                    {expandedId === b._id && (
+                      <tr className="bg-slate-50/70 dark:bg-zinc-800/40 border-b border-slate-100 dark:border-zinc-800">
+                        <td colSpan={7} className="px-6 py-4">
+                          <div className="max-w-xl mx-auto space-y-3">
+                            <p className="text-[11px] font-bold uppercase tracking-wider text-slate-400 text-center">
+                              Live Job Status Step Tracker
+                            </p>
+                            <StatusTimeline status={b.status} paymentStatus={b.paymentStatus} />
+                            <div className="pt-2 text-[11px] text-slate-500 text-center">
+                              Problem: <span className="text-slate-800 dark:text-zinc-200">{b.problemDescription}</span>
+                            </div>
+                          </div>
+                        </td>
+                      </tr>
+                    )}
+                  </Fragment>
+                );
                 })}
               </tbody>
             </table>
