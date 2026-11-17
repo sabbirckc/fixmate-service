@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import { Wrench, Menu, X, LayoutDashboard, UserCheck, LogOut, ChevronDown, Sparkles } from "lucide-react";
+import ThemeToggle from "@/components/ThemeToggle";
 import { authClient } from "@/lib/auth-client";
 import { removeStoredToken } from "@/lib/api-client";
 import { toast } from "sonner";
@@ -119,6 +120,7 @@ export default function Navbar() {
 
         {/* User / Auth State */}
         <div className="hidden md:flex items-center gap-3">
+          <ThemeToggle />
           {user ? (
             <div className="relative" ref={dropdownRef}>
               <button
@@ -205,7 +207,8 @@ export default function Navbar() {
         </div>
 
         {/* Mobile Hamburger Button */}
-        <div className="md:hidden flex items-center">
+        <div className="md:hidden flex items-center gap-2">
+          <ThemeToggle />
           <button
             type="button"
             onClick={() => setMobileMenuOpen(!mobileMenuOpen)}
