@@ -3,7 +3,7 @@
 import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api-client";
-import { uploadImageToImgBB } from "@/lib/imgbb";
+import { uploadImage } from "@/lib/imgbb";
 import { toast } from "sonner";
 import {
   User,
@@ -30,9 +30,8 @@ export default function ProfilePage() {
   const [bio, setBio] = useState("");
   const [image, setImage] = useState<string | null>(null);
 
-  // File upload state for ImgBB
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // ImgBB Upload State (per Notion guide: upload on file selection)
+  const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
 
@@ -50,7 +49,6 @@ export default function ProfilePage() {
           setArea(u.area || "");
           setBio(u.bio || "");
           setImage(u.image || null);
-          setImagePreview(u.image || null);
         }
       } catch (err) {
         console.warn("Could not fetch remote profile, falling back to session:", err);
@@ -62,7 +60,6 @@ export default function ProfilePage() {
           setArea((sessionUser as any).area || "");
           setBio((sessionUser as any).bio || "");
           setImage(sessionUser.image || null);
-          setImagePreview(sessionUser.image || null);
         }
       } finally {
         setLoading(false);
@@ -72,15 +69,22 @@ export default function ProfilePage() {
     fetchProfile();
   }, [sessionUser]);
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      setUploadingImage(true);
+      toast.loading("Uploading photo to ImgBB...", { id: "profile-upload" });
+      const uploadedUrl = await uploadImage(file);
+      setImage(uploadedUrl);
+      console.log("Uploaded Image URL:", uploadedUrl);
+      toast.success("Photo uploaded to ImgBB successfully!", { id: "profile-upload" });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || "Failed to upload photo to ImgBB", { id: "profile-upload" });
+    } finally {
+      setUploadingImage(false);
     }
   };
 
@@ -94,15 +98,6 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
-      let finalImageUrl = image;
-
-      // Upload new photo to ImgBB if chosen
-      if (imageFile) {
-        toast.loading("Uploading new profile photo to ImgBB...", { id: "profile-upload" });
-        finalImageUrl = await uploadImageToImgBB(imageFile);
-        toast.dismiss("profile-upload");
-      }
-
       const res = await apiFetch("/api/users/profile", {
         method: "PATCH",
         body: JSON.stringify({
@@ -110,7 +105,7 @@ export default function ProfilePage() {
           phone: phone.trim(),
           area: area.trim(),
           bio: bio.trim(),
-          image: finalImageUrl,
+          image: image,
         }),
       });
 
@@ -149,12 +144,14 @@ export default function ProfilePage() {
 
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8">
         <form onSubmit={handleProfileSubmit} className="space-y-6">
-          {/* Avatar Upload */}
+          {/* Avatar Upload with ImgBB */}
           <div className="flex flex-col sm:flex-row items-center gap-6 pb-6 border-b border-slate-100 dark:border-zinc-800">
             <div className="relative group">
               <div className="w-24 h-24 rounded-3xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-3xl shadow-md border-2 border-slate-200 dark:border-zinc-700">
-                {imagePreview ? (
-                  <img src={imagePreview} alt="Avatar" className="w-full h-full object-cover" />
+                {uploadingImage ? (
+                  <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+                ) : image ? (
+                  <img src={image} alt="Avatar" className="w-full h-full object-cover" />
                 ) : (
                   name.charAt(0).toUpperCase() || "U"
                 )}
@@ -164,7 +161,8 @@ export default function ProfilePage() {
                 <input
                   type="file"
                   accept="image/*"
-                  onChange={handleImageChange}
+                  disabled={uploadingImage}
+                  onChange={handleImageUpload}
                   className="hidden"
                 />
               </label>

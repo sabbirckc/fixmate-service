@@ -1,43 +1,33 @@
 /**
- * ImgBB Image Upload Utility
- * Uploads an image file to ImgBB via official API v1 and returns the hosted URL.
+ * How to Upload Images Using ImgBB in Next.js
+ * Implementation following the guide specifications.
  */
-export async function uploadImageToImgBB(file: File): Promise<string> {
-  const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
 
+export const uploadImage = async (imageFile: File): Promise<string> => {
+  const apiKey = process.env.NEXT_PUBLIC_IMGBB_API_KEY;
   if (!apiKey) {
-    console.warn("NEXT_PUBLIC_IMGBB_API_KEY is not defined. Using local data preview fallback.");
-    return convertFileToDataUrl(file);
+    throw new Error("NEXT_PUBLIC_IMGBB_API_KEY is not configured");
   }
 
-  try {
-    const formData = new FormData();
-    formData.append("image", file);
+  const formData = new FormData();
+  formData.append("image", imageFile);
 
-    const response = await fetch(`https://api.imgbb.com/1/upload?key=${apiKey}`, {
+  const response = await fetch(
+    `https://api.imgbb.com/1/upload?key=${apiKey}`,
+    {
       method: "POST",
       body: formData,
-    });
-
-    const result = await response.json();
-
-    if (result && result.success && result.data) {
-      return result.data.url || result.data.display_url;
     }
+  );
 
-    console.warn("ImgBB API upload notice:", result?.error?.message || "Using preview fallback");
-    return convertFileToDataUrl(file);
-  } catch (error: any) {
-    console.warn("ImgBB upload exception, using local image fallback:", error?.message || error);
-    return convertFileToDataUrl(file);
+  const data = await response.json();
+
+  if (data && data.success && data.data?.url) {
+    return data.data.url;
   }
-}
 
-function convertFileToDataUrl(file: File): Promise<string> {
-  return new Promise((resolve, reject) => {
-    const reader = new FileReader();
-    reader.onloadend = () => resolve(reader.result as string);
-    reader.onerror = reject;
-    reader.readAsDataURL(file);
-  });
-}
+  throw new Error(data?.error?.message || "Image upload failed");
+};
+
+export const uploadImageToImgBB = uploadImage;
+

@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api-client";
-import { uploadImageToImgBB } from "@/lib/imgbb";
+import { uploadImage } from "@/lib/imgbb";
 import type { ServiceCategory, ServiceMode } from "@/types";
 import { toast } from "sonner";
 import {
@@ -47,9 +47,9 @@ export default function AddServicePage() {
   const [serviceMode, setServiceMode] = useState<ServiceMode>("Home Visit");
   const [serviceArea, setServiceArea] = useState(user ? (user as any).area || "Dhanmondi, Dhaka" : "Dhanmondi, Dhaka");
 
-  // Image Upload State (ImgBB file input)
-  const [imageFile, setImageFile] = useState<File | null>(null);
-  const [imagePreview, setImagePreview] = useState<string | null>(null);
+  // ImgBB Image Upload State (uploaded immediately on selection per ImgBB guide)
+  const [imageUrl, setImageUrl] = useState("");
+  const [imageLoading, setImageLoading] = useState(false);
   const [submitting, setSubmitting] = useState(false);
 
   // Pro Plan check
@@ -88,15 +88,22 @@ export default function AddServicePage() {
     }
   };
 
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
-    if (file) {
-      setImageFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setImagePreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
+    if (!file) return;
+
+    try {
+      setImageLoading(true);
+      toast.loading("Uploading image to ImgBB...", { id: "img-upload" });
+      const uploadedUrl = await uploadImage(file);
+      setImageUrl(uploadedUrl);
+      console.log("Uploaded Image URL:", uploadedUrl);
+      toast.success("Image uploaded successfully!", { id: "img-upload" });
+    } catch (error: any) {
+      console.error(error);
+      toast.error(error?.message || "Image upload to ImgBB failed", { id: "img-upload" });
+    } finally {
+      setImageLoading(false);
     }
   };
 
@@ -119,26 +126,21 @@ export default function AddServicePage() {
       return;
     }
 
-    if (!imageFile) {
-      toast.error("Please upload a service banner image file");
+    if (!imageUrl) {
+      toast.error("Please upload a service banner image file to ImgBB");
       return;
     }
 
     setSubmitting(true);
     try {
-      // 1. Upload file to ImgBB
-      toast.loading("Uploading service banner to ImgBB...", { id: "img-upload" });
-      const uploadedUrl = await uploadImageToImgBB(imageFile);
-      toast.dismiss("img-upload");
-
-      // 2. Submit to backend
+      // Submit service with hosted ImgBB URL directly to backend
       const res = await apiFetch("/api/services", {
         method: "POST",
         body: JSON.stringify({
           title: title.trim(),
           category,
           description: description.trim(),
-          image: uploadedUrl,
+          image: imageUrl,
           basePrice: price,
           estimatedDuration: estimatedDuration.trim(),
           serviceMode,
@@ -333,26 +335,37 @@ export default function AddServicePage() {
             />
           </div>
 
-          {/* ImgBB File Upload Input (Rule: File input, not a URL field!) */}
+          {/* ImgBB File Upload Input - Following ImgBB Next.js Guide */}
           <div>
             <label className="block text-xs font-semibold text-slate-700 dark:text-zinc-300 mb-1.5">
               Service Banner Image (ImgBB File Upload) *
             </label>
             <div className="border-2 border-dashed border-slate-300 dark:border-zinc-700 rounded-2xl p-6 text-center hover:border-amber-500 transition-colors">
-              {imagePreview ? (
+              {imageLoading ? (
+                <div className="py-6 flex flex-col items-center justify-center gap-2">
+                  <Loader2 className="w-8 h-8 animate-spin text-amber-600" />
+                  <p className="text-xs font-semibold text-amber-700 dark:text-amber-400">
+                    Uploading image to ImgBB...
+                  </p>
+                  <p className="text-[10px] text-slate-400">Please wait while the hosted URL is generated</p>
+                </div>
+              ) : imageUrl ? (
                 <div className="space-y-3">
                   <img
-                    src={imagePreview}
+                    src={imageUrl}
                     alt="Preview"
-                    className="w-full max-h-48 object-cover rounded-xl mx-auto"
+                    className="w-full max-h-56 object-cover rounded-xl mx-auto border border-slate-200 dark:border-zinc-700 shadow-sm"
                   />
-                  <div className="flex justify-center gap-3">
-                    <label className="cursor-pointer px-4 py-1.5 bg-slate-100 hover:bg-slate-200 text-slate-700 text-xs font-semibold rounded-lg">
-                      <span>Change File</span>
+                  <div className="flex flex-col sm:flex-row items-center justify-between gap-2 px-1 pt-1">
+                    <span className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium flex items-center gap-1.5">
+                      <CheckCircle className="w-4 h-4 text-emerald-500" /> Uploaded to ImgBB successfully
+                    </span>
+                    <label className="cursor-pointer px-4 py-1.5 bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-semibold rounded-lg transition-colors">
+                      <span>Change Image</span>
                       <input
                         type="file"
                         accept="image/*"
-                        onChange={handleImageChange}
+                        onChange={handleImageUpload}
                         className="hidden"
                       />
                     </label>
@@ -362,16 +375,16 @@ export default function AddServicePage() {
                 <div>
                   <Upload className="w-8 h-8 text-slate-400 mx-auto mb-2" />
                   <p className="text-xs font-medium text-slate-700 dark:text-zinc-300">
-                    Click to select an image file to upload through ImgBB
+                    Select an image file to upload directly to ImgBB
                   </p>
                   <p className="text-[10px] text-slate-400 mt-1">PNG, JPG, WEBP up to 10MB</p>
-                  <label className="mt-3 inline-block cursor-pointer px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs rounded-xl border border-amber-200">
+                  <label className="mt-3 inline-block cursor-pointer px-4 py-2 bg-amber-50 text-amber-700 hover:bg-amber-100 font-bold text-xs rounded-xl border border-amber-200 transition-colors">
                     <span>Browse Image File</span>
                     <input
                       type="file"
                       accept="image/*"
                       required
-                      onChange={handleImageChange}
+                      onChange={handleImageUpload}
                       className="hidden"
                     />
                   </label>
