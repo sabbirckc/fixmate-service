@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, Suspense, useCallback } from "react";
+import { useState, useEffect, Suspense, useCallback, useRef } from "react";
 import { useRouter, useSearchParams, usePathname } from "next/navigation";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -17,6 +17,7 @@ import {
   ChevronRight,
   Wrench,
   Loader2,
+  X,
 } from "lucide-react";
 
 const CATEGORIES: { label: string; value: string }[] = [
@@ -58,6 +59,7 @@ function BrowseServicesContent() {
   const [services, setServices] = useState<Service[]>([]);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+  const [isRelatable, setIsRelatable] = useState(false);
   const [loading, setLoading] = useState(true);
 
   // Sync search input if URL changes (e.g., navigating back)
@@ -78,7 +80,12 @@ function BrowseServicesContent() {
         }
       });
 
-      // Reset to page 1 whenever filters change (unless page itself is changing)
+      // If initiating a new search query, clear any prior category lock unless category was explicitly set
+      if ("search" in newParams && newParams.search && !("category" in newParams)) {
+        params.delete("category");
+      }
+
+      // Reset to page 1 whenever search/filters change (unless page itself is explicitly changing)
       if (!("page" in newParams)) {
         params.delete("page");
       }
@@ -108,6 +115,7 @@ function BrowseServicesContent() {
         const res = await apiFetch("/api/services", { params: queryParams });
         if (isMounted && res.success) {
           setServices(res.services || []);
+          setIsRelatable(Boolean(res.isRelatable));
           setTotalPages(res.pagination?.totalPages || 1);
           setTotalCount(res.pagination?.total || 0);
         }
@@ -127,7 +135,12 @@ function BrowseServicesContent() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    updateUrlParams({ search: searchInput.trim() });
+    updateUrlParams({ search: searchInput.trim(), category: "all" });
+  };
+
+  const handleClearSearch = () => {
+    setSearchInput("");
+    updateUrlParams({ search: "" });
   };
 
   const resetAllFilters = () => {
@@ -158,14 +171,24 @@ function BrowseServicesContent() {
           {/* Search Bar */}
           <form onSubmit={handleSearchSubmit} className="mt-8 flex flex-col sm:flex-row gap-3 max-w-2xl">
             <div className="relative flex-1">
-              <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2" />
+              <Search className="w-5 h-5 text-slate-400 absolute left-3.5 top-1/2 -translate-y-1/2 pointer-events-none" />
               <input
                 type="text"
                 value={searchInput}
                 onChange={(e) => setSearchInput(e.target.value)}
-                placeholder="Search by device, service title, or keyword..."
-                className="w-full pl-11 pr-4 py-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm shadow-sm"
+                placeholder="Search by device, service title, brand, technician, or mode..."
+                className="w-full pl-11 pr-10 py-3 rounded-xl border border-slate-300 dark:border-zinc-700 bg-slate-50/50 dark:bg-zinc-800 text-slate-900 dark:text-white focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm shadow-sm"
               />
+              {searchInput && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="absolute right-3 top-1/2 -translate-y-1/2 p-1 rounded-md text-slate-400 hover:text-slate-600 dark:hover:text-zinc-200 hover:bg-slate-200/50 dark:hover:bg-zinc-700/50 transition-colors"
+                  title="Clear search"
+                >
+                  <X className="w-4 h-4" />
+                </button>
+              )}
             </div>
             <button
               type="submit"
@@ -257,29 +280,55 @@ function BrowseServicesContent() {
             <p className="text-sm font-medium">Filtering services from server...</p>
           </div>
         ) : services.length > 0 ? (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {services.map((service) => (
-              <ServiceCard key={service._id} service={service} />
-            ))}
+          <div className="space-y-6">
+            {isRelatable && currentSearch && (
+              <div className="p-4 rounded-2xl bg-blue-50/70 dark:bg-blue-950/40 border border-blue-200/80 dark:border-blue-900/50 text-blue-900 dark:text-blue-200 flex items-center gap-3 text-xs sm:text-sm shadow-sm">
+                <Sparkles className="w-5 h-5 text-blue-600 dark:text-blue-400 shrink-0" />
+                <p>
+                  No exact match found for <strong>&ldquo;{currentSearch}&rdquo;</strong>. Showing <strong>relatable repair services</strong>:
+                </p>
+              </div>
+            )}
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {services.map((service) => (
+                <ServiceCard key={service._id} service={service} />
+              ))}
+            </div>
           </div>
         ) : (
           /* Empty State */
-          <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-8 max-w-lg mx-auto">
+          <div className="text-center py-20 bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 p-8 max-w-lg mx-auto shadow-sm">
             <div className="w-16 h-16 rounded-2xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center mx-auto mb-4">
               <Wrench className="w-8 h-8" />
             </div>
-            <h3 className="text-lg font-bold text-slate-900 dark:text-white">No repair services matched</h3>
+            <h3 className="text-lg font-bold text-slate-900 dark:text-white">
+              {currentSearch ? `No services matched "${currentSearch}"` : "No repair services matched"}
+            </h3>
             <p className="text-xs text-slate-500 dark:text-zinc-400 mt-1.5 leading-relaxed">
-              We couldn't find any approved services matching your search or filters. Try adjusting your query or clear the active filters.
+              {currentSearch
+                ? "Try searching with broader terms (e.g. 'phone', 'ac', 'repair', 'screen') or check across all categories."
+                : "We couldn't find any approved services matching your active filters. Try adjusting or clearing your filters."}
             </p>
-            <button
-              type="button"
-              onClick={resetAllFilters}
-              className="mt-5 inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 text-white font-semibold text-xs shadow-md shadow-blue-500/20 cursor-pointer"
-            >
-              <RotateCcw className="w-3.5 h-3.5" />
-              <span>Reset all filters</span>
-            </button>
+            <div className="mt-5 flex items-center justify-center gap-3">
+              {currentSearch && (
+                <button
+                  type="button"
+                  onClick={handleClearSearch}
+                  className="inline-flex items-center gap-1.5 px-4 py-2.5 rounded-xl bg-slate-100 hover:bg-slate-200 dark:bg-zinc-800 dark:hover:bg-zinc-700 text-slate-700 dark:text-zinc-200 font-semibold text-xs transition-colors cursor-pointer"
+                >
+                  <X className="w-3.5 h-3.5" />
+                  <span>Clear Search</span>
+                </button>
+              )}
+              <button
+                type="button"
+                onClick={resetAllFilters}
+                className="inline-flex items-center gap-2 px-5 py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-semibold text-xs shadow-md shadow-blue-500/20 cursor-pointer transition-colors"
+              >
+                <RotateCcw className="w-3.5 h-3.5" />
+                <span>Reset all filters</span>
+              </button>
+            </div>
           </div>
         )}
 

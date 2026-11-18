@@ -3,6 +3,7 @@ const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000"
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
   token?: string | null;
+  _isRetry?: boolean;
 }
 
 /**
@@ -24,10 +25,91 @@ export function removeStoredToken(): void {
 }
 
 /**
- * Robust fetch client for FixMate Express API
+ * Checks if a JWT token is missing, malformed, or expired (with 30s buffer)
+ */
+export function isTokenExpired(token: string | null): boolean {
+  if (!token) return true;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return true;
+    const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+    if (!payload.email || !payload.email.includes("@")) return true;
+    if (payload.exp && typeof payload.exp === "number") {
+      return Date.now() >= (payload.exp * 1000) - 30000;
+    }
+    return false;
+  } catch {
+    return true;
+  }
+}
+
+let refreshTokenPromise: Promise<string | null> | null = null;
+
+/**
+ * Silently refresh or issue a fresh JWT token for the current Better-Auth session
+ */
+export async function refreshAuthToken(): Promise<string | null> {
+  if (typeof window === "undefined") return null;
+
+  if (refreshTokenPromise) {
+    return refreshTokenPromise;
+  }
+
+  refreshTokenPromise = (async () => {
+    try {
+      const { authClient } = await import("@/lib/auth-client");
+      const sessionRes = await authClient.getSession();
+      const user = sessionRes?.data?.user;
+
+      if (!user?.email) {
+        removeStoredToken();
+        return null;
+      }
+
+      // Request fresh Express JWT token signed with server's JWT_SECRET
+      const res = await fetch(`${SERVER_URL}/api/auth/jwt`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          email: user.email,
+          name: user.name,
+          role: (user as any).role || "customer",
+        }),
+      });
+
+      const data = await res.json().catch(() => null);
+      if (data?.success && data?.token) {
+        setStoredToken(data.token);
+        return data.token as string;
+      }
+
+      // Fallback to Next.js Better-Auth /api/auth/token endpoint
+      const tokenRes = await fetch("/api/auth/token", { credentials: "include" })
+        .then((r) => r.json())
+        .catch(() => null);
+
+      if (tokenRes?.token) {
+        setStoredToken(tokenRes.token);
+        return tokenRes.token as string;
+      }
+
+      return null;
+    } catch (err) {
+      console.warn("[api-client] Token refresh notice:", err);
+      return null;
+    } finally {
+      refreshTokenPromise = null;
+    }
+  })();
+
+  return refreshTokenPromise;
+}
+
+/**
+ * Robust fetch client for FixMate Express API with automatic token management and retry
  */
 export async function apiFetch<T = any>(endpoint: string, options: FetchOptions = {}): Promise<T> {
-  const { params, headers, token, ...restOptions } = options;
+  const { params, headers, token, _isRetry, ...restOptions } = options;
 
   let url = `${SERVER_URL}${endpoint.startsWith("/") ? endpoint : `/${endpoint}`}`;
 
@@ -44,7 +126,13 @@ export async function apiFetch<T = any>(endpoint: string, options: FetchOptions 
     }
   }
 
-  const activeToken = token || getStoredToken();
+  let activeToken = token !== undefined ? token : getStoredToken();
+
+  // If token is expired or missing in browser, proactively obtain a fresh token
+  if (typeof window !== "undefined" && !token && isTokenExpired(activeToken)) {
+    activeToken = await refreshAuthToken();
+  }
+
   const authHeaders: Record<string, string> = {};
   if (activeToken) {
     authHeaders["Authorization"] = `Bearer ${activeToken}`;
@@ -59,6 +147,19 @@ export async function apiFetch<T = any>(endpoint: string, options: FetchOptions 
     },
     credentials: "include",
   });
+
+  // Handle 401 Unauthorized (expired or invalid token) with automatic transparent retry
+  if (res.status === 401 && !_isRetry && typeof window !== "undefined") {
+    removeStoredToken();
+    const freshToken = await refreshAuthToken();
+    if (freshToken) {
+      return apiFetch<T>(endpoint, {
+        ...options,
+        token: freshToken,
+        _isRetry: true,
+      });
+    }
+  }
 
   const data = await res.json().catch(() => ({}));
 

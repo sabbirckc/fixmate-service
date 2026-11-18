@@ -70,19 +70,15 @@ function SignInContent() {
 
         toast.success(`Welcome back, ${tokenRes.user?.name || data?.user?.name || "User"}!`);
 
-        // 3. Redirect logic
-        if (callbackUrl) {
-          router.push(callbackUrl);
-        } else if (userRole === "admin") {
-          router.push("/dashboard/admin");
-        } else if (userRole === "technician") {
-          router.push("/dashboard/technician");
-        } else {
-          router.push("/dashboard/customer");
-        }
+        // 3. Redirect logic: Move to home page after login
+        const destination = callbackUrl && !callbackUrl.includes("/sign-in") ? callbackUrl : "/";
+        router.push(destination);
+        router.refresh();
       } catch (tokenErr) {
         console.warn("JWT sync warning:", tokenErr);
-        router.push("/dashboard/customer");
+        const destination = callbackUrl && !callbackUrl.includes("/sign-in") ? callbackUrl : "/";
+        router.push(destination);
+        router.refresh();
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred during login.");
@@ -94,9 +90,10 @@ function SignInContent() {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      const destination = callbackUrl && !callbackUrl.includes("/sign-in") ? callbackUrl : "/";
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard/customer",
+        callbackURL: destination,
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign in with Google");

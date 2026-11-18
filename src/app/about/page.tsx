@@ -1,3 +1,4 @@
+import type { Metadata } from "next";
 import Link from "next/link";
 import Navbar from "@/components/Navbar";
 import Footer from "@/components/Footer";
@@ -13,6 +14,12 @@ import {
   Award,
   Zap,
 } from "lucide-react";
+
+export const metadata: Metadata = {
+  title: "About Us & How FixMate Works",
+  description:
+    "Learn how FixMate provides honest, reliable smart device and home appliance repairs with zero upfront risk and guaranteed post-completion payments.",
+};
 
 export default function AboutPage() {
   const values = [

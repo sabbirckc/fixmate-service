@@ -73,9 +73,14 @@ export const auth = betterAuth({
     jwt({
       jwt: {
         definePayload: (session) => ({
+          id: session.user.id,
+          email: session.user.email,
+          name: session.user.name,
+          image: session.user.image || "",
           role: (session.user as any).role || "customer",
           phone: (session.user as any).phone || "",
           area: (session.user as any).area || "",
+          bio: (session.user as any).bio || "",
         }),
       },
     }),

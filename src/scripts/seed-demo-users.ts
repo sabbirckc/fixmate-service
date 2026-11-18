@@ -22,6 +22,15 @@ async function seed() {
       bio: "Certified electronics and device repair specialist with 8+ years experience in smartphones, motherboards, and micro-soldering.",
     },
     {
+      email: "karim@fixmate.com",
+      password: "Password123",
+      name: "Karim Appliance Care",
+      role: "technician",
+      phone: "+8801911445566",
+      area: "Mirpur-10, Dhaka",
+      bio: "Specialist in Inverter AC servicing, Compressor repairs, and Washing machine PCB diagnostics.",
+    },
+    {
       email: "customer@fixmate.com",
       password: "Password123",
       name: "Tanvir Ahmed",

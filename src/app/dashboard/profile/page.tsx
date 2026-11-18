@@ -36,19 +36,38 @@ export default function ProfilePage() {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
+    // If sessionUser is already available, eagerly populate known fields
+    if (sessionUser) {
+      if (sessionUser.email) setEmail(sessionUser.email);
+      if (sessionUser.name) setName(sessionUser.name);
+      if ((sessionUser as any).role) setRole((sessionUser as any).role);
+      if ((sessionUser as any).phone) setPhone((sessionUser as any).phone);
+      if ((sessionUser as any).area) setArea((sessionUser as any).area);
+      if ((sessionUser as any).bio) setBio((sessionUser as any).bio);
+      if (sessionUser.image) setImage(sessionUser.image);
+    }
+
     const fetchProfile = async () => {
       try {
         setLoading(true);
         const res = await apiFetch("/api/users/profile");
-        if (res.success && res.user) {
+        if (res?.success && res?.user) {
           const u = res.user;
-          setName(u.name || "");
-          setEmail(u.email || "");
-          setRole(u.role || "customer");
-          setPhone(u.phone || "");
-          setArea(u.area || "");
-          setBio(u.bio || "");
-          setImage(u.image || null);
+          const resolvedEmail = (u.email && u.email.includes("@")) ? u.email : (sessionUser?.email || "");
+          const resolvedName = (u.name && u.name !== "FixMate User") ? u.name : (sessionUser?.name || u.name || "");
+          const resolvedRole = u.role || (sessionUser as any)?.role || "customer";
+          const resolvedPhone = u.phone || (sessionUser as any)?.phone || "";
+          const resolvedArea = u.area || (sessionUser as any)?.area || "";
+          const resolvedBio = u.bio || (sessionUser as any)?.bio || "";
+          const resolvedImage = u.image || sessionUser?.image || null;
+
+          setName(resolvedName);
+          setEmail(resolvedEmail);
+          setRole(resolvedRole);
+          setPhone(resolvedPhone);
+          setArea(resolvedArea);
+          setBio(resolvedBio);
+          setImage(resolvedImage);
         }
       } catch (err) {
         console.warn("Could not fetch remote profile, falling back to session:", err);
@@ -98,24 +117,48 @@ export default function ProfilePage() {
 
     setSaving(true);
     try {
+      const payload = {
+        name: name.trim(),
+        phone: phone.trim(),
+        area: area.trim(),
+        bio: bio.trim(),
+        image: image,
+      };
+
       const res = await apiFetch("/api/users/profile", {
         method: "PATCH",
-        body: JSON.stringify({
-          name: name.trim(),
-          phone: phone.trim(),
-          area: area.trim(),
-          bio: bio.trim(),
-          image: image,
-        }),
+        body: JSON.stringify(payload),
       });
 
-      if (res.success) {
+      if (res?.success) {
+        if (res.user) {
+          setName(res.user.name || name.trim());
+          setPhone(res.user.phone || phone.trim());
+          setArea(res.user.area || area.trim());
+          setBio(res.user.bio || bio.trim());
+          if (res.user.image) setImage(res.user.image);
+        }
+
+        // Also update BetterAuth session so Navbar and Topbar update immediately
+        try {
+          if ((authClient as any)?.updateUser) {
+            await (authClient as any).updateUser({
+              name: name.trim(),
+              image: image || undefined,
+            });
+          }
+        } catch (e) {
+          console.warn("BetterAuth updateUser notice:", e);
+        }
+
         toast.success("Profile updated successfully!", {
           description: "Your updated information is now active across your account.",
         });
 
         // Trigger BetterAuth session reload so Navbar updates immediately
-        window.location.reload();
+        setTimeout(() => {
+          window.location.reload();
+        }, 500);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");

@@ -1,11 +1,11 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { authClient } from "@/lib/auth-client";
-import { getStoredToken, setStoredToken, removeStoredToken, apiFetch } from "@/lib/api-client";
+import { getStoredToken, setStoredToken, removeStoredToken, apiFetch, isTokenExpired, refreshAuthToken } from "@/lib/api-client";
 import type { Role } from "@/types";
 import {
   Wrench,
@@ -24,6 +24,7 @@ import {
   X,
   ExternalLink,
   ChevronRight,
+  ChevronDown,
   ShieldCheck,
   Loader2,
   Home,
@@ -35,9 +36,28 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const router = useRouter();
   const { data: session, isPending } = authClient.useSession();
   const [sidebarOpen, setSidebarOpen] = useState(false);
+  const [dropdownOpen, setDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
 
   const user = session?.user;
   const userRole = ((user as any)?.role || "customer") as Role;
+
+  // Close dropdown on click outside
+  useEffect(() => {
+    function handleClickOutside(event: MouseEvent) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setDropdownOpen(false);
+      }
+    }
+    document.addEventListener("mousedown", handleClickOutside);
+    return () => document.removeEventListener("mousedown", handleClickOutside);
+  }, []);
+
+  // Close mobile sidebar and dropdown on route change
+  useEffect(() => {
+    setSidebarOpen(false);
+    setDropdownOpen(false);
+  }, [pathname]);
 
   // Protect dashboard routes
   useEffect(() => {
@@ -47,38 +67,10 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     if (!isPending && userRole) {
-      // Sync JWT token from Better Auth /token endpoint (crucial for Google OAuth social logins)
-      if (session?.user?.email && !getStoredToken()) {
-        fetch("/api/auth/token", { credentials: "include" })
-          .then((r) => r.json())
-          .then((data) => {
-            if (data?.token) {
-              setStoredToken(data.token);
-            } else {
-              apiFetch("/api/auth/jwt", {
-                method: "POST",
-                body: JSON.stringify({
-                  email: session.user.email,
-                  name: session.user.name,
-                  role: userRole,
-                }),
-              }).then((res) => {
-                if (res.token) setStoredToken(res.token);
-              });
-            }
-          })
-          .catch(() => {
-            apiFetch("/api/auth/jwt", {
-              method: "POST",
-              body: JSON.stringify({
-                email: session.user.email,
-                name: session.user.name,
-                role: userRole,
-              }),
-            }).then((res) => {
-              if (res.token) setStoredToken(res.token);
-            });
-          });
+      // Sync JWT token with Express backend (automatically refreshes when expired or missing)
+      const existingToken = getStoredToken();
+      if (session?.user?.email && isTokenExpired(existingToken)) {
+        refreshAuthToken();
       }
 
       // Role route guard
@@ -191,19 +183,25 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
         </div>
 
         {/* User Card */}
-        <div className="p-4 mx-3 my-3 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800/80 flex items-center gap-3">
-          <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0">
+        <Link
+          href="/dashboard/profile"
+          className="p-4 mx-3 my-3 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800/80 flex items-center gap-3 hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all group cursor-pointer"
+        >
+          <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm group-hover:scale-105 transition-transform">
             {user.image ? (
               <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
             ) : (
-              user.name?.charAt(0).toUpperCase()
+              user.name?.charAt(0).toUpperCase() || "U"
             )}
           </div>
           <div className="min-w-0 flex-1">
-            <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+            <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
+              {user.name}
+            </p>
             <div className="mt-0.5">{roleBadge(userRole)}</div>
           </div>
-        </div>
+          <ChevronRight className="w-3.5 h-3.5 text-slate-400 group-hover:text-blue-600 group-hover:translate-x-0.5 transition-all" />
+        </Link>
 
         {/* Navigation */}
         <nav className="flex-1 px-3 py-2 space-y-1 overflow-y-auto">
@@ -243,23 +241,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             <UserCheck className="w-4 h-4 shrink-0" />
             <span>Update Profile</span>
           </Link>
-          <Link
-            href="/"
-            className="flex items-center gap-3 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-400 hover:bg-slate-100/70 dark:hover:bg-zinc-800"
-          >
-            <Home className="w-4 h-4 shrink-0" />
-            <span>Public Website</span>
-          </Link>
         </nav>
 
-        {/* Logout */}
-        <div className="p-3 border-t border-slate-100 dark:border-zinc-800">
+        {/* Sidebar Footer Actions */}
+        <div className="p-3 border-t border-slate-100 dark:border-zinc-800 space-y-1">
+          <Link
+            href="/"
+            className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-zinc-800 transition-colors"
+          >
+            <ExternalLink className="w-4 h-4 shrink-0" />
+            <span>Back to site</span>
+          </Link>
           <button
             type="button"
             onClick={handleSignOut}
             className="w-full flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
           >
-            <LogOut className="w-4 h-4" />
+            <LogOut className="w-4 h-4 shrink-0" />
             <span>Sign Out</span>
           </button>
         </div>
@@ -304,13 +302,20 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <span>Update Profile</span>
               </Link>
             </nav>
-            <div className="p-4 border-t border-slate-100 dark:border-zinc-800">
+            <div className="p-4 border-t border-slate-100 dark:border-zinc-800 space-y-1">
+              <Link
+                href="/"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:text-blue-600 dark:hover:text-blue-400 hover:bg-slate-100/70 dark:hover:bg-zinc-800 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4 shrink-0" />
+                <span>Back to site</span>
+              </Link>
               <button
                 type="button"
                 onClick={handleSignOut}
-                className="w-full flex items-center gap-2 text-xs font-semibold text-rose-600"
+                className="w-full flex items-center gap-2.5 px-3.5 py-2 rounded-xl text-xs font-semibold text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
               >
-                <LogOut className="w-4 h-4" />
+                <LogOut className="w-4 h-4 shrink-0" />
                 <span>Sign Out</span>
               </button>
             </div>
@@ -339,25 +344,90 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
           <div className="flex items-center gap-3">
             <ThemeToggle />
-            <Link
-              href="/"
-              className="hidden sm:inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-xs font-semibold text-slate-600 dark:text-zinc-300 hover:bg-slate-50"
-            >
-              <span>View Site</span>
-              <ExternalLink className="w-3.5 h-3.5" />
-            </Link>
-            <div className="flex items-center gap-2.5 pl-2 border-l border-slate-200 dark:border-zinc-800">
-              <div className="text-right hidden sm:block">
-                <p className="text-xs font-bold text-slate-900 dark:text-white">{user.name}</p>
-                <p className="text-[10px] text-slate-400 capitalize">{userRole}</p>
-              </div>
-              <div className="w-9 h-9 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-sm">
-                {user.image ? (
-                  <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
-                ) : (
-                  user.name?.charAt(0).toUpperCase()
-                )}
-              </div>
+            {/* Topbar User Profile Dropdown */}
+            <div className="relative" ref={dropdownRef}>
+              <button
+                type="button"
+                onClick={() => setDropdownOpen((prev) => !prev)}
+                className="flex items-center gap-2.5 pl-2.5 py-1 pr-1.5 rounded-xl border-l border-slate-200 dark:border-zinc-800 hover:bg-slate-100/70 dark:hover:bg-zinc-800/70 transition-all cursor-pointer group"
+                aria-expanded={dropdownOpen}
+                aria-haspopup="true"
+              >
+                <div className="text-right hidden sm:block">
+                  <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
+                    {user.name}
+                  </p>
+                  <p className="text-[10px] text-slate-400 capitalize">{userRole}</p>
+                </div>
+                <div className="w-9 h-9 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform shrink-0">
+                  {user.image ? (
+                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                  ) : (
+                    user.name?.charAt(0).toUpperCase() || "U"
+                  )}
+                </div>
+                <ChevronDown
+                  className={`w-3.5 h-3.5 text-slate-400 transition-transform duration-200 ${
+                    dropdownOpen ? "rotate-180 text-blue-600" : ""
+                  }`}
+                />
+              </button>
+
+              {/* Dropdown Menu */}
+              {dropdownOpen && (
+                <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-slate-200 dark:border-zinc-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
+                  <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
+                    <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
+                      {user.name}
+                    </p>
+                    <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mb-1.5">
+                      {user.email}
+                    </p>
+                    <div className="flex items-center gap-2">
+                      {roleBadge(userRole)}
+                    </div>
+                  </div>
+
+                  <div className="py-1.5">
+                    <Link
+                      href={
+                        userRole === "admin"
+                          ? "/dashboard/admin"
+                          : userRole === "technician"
+                          ? "/dashboard/technician"
+                          : "/dashboard/customer"
+                      }
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 font-medium transition-colors"
+                    >
+                      <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                      <span>Dashboard</span>
+                    </Link>
+                    <Link
+                      href="/dashboard/profile"
+                      onClick={() => setDropdownOpen(false)}
+                      className="flex items-center gap-2.5 px-4 py-2.5 text-sm text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800/60 font-medium transition-colors"
+                    >
+                      <UserCheck className="w-4 h-4 text-slate-500" />
+                      <span>Update Profile</span>
+                    </Link>
+                  </div>
+
+                  <div className="border-t border-slate-100 dark:border-zinc-800 pt-1.5">
+                    <button
+                      type="button"
+                      onClick={() => {
+                        setDropdownOpen(false);
+                        handleSignOut();
+                      }}
+                      className="w-full flex items-center gap-2.5 px-4 py-2 text-sm text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors font-medium cursor-pointer"
+                    >
+                      <LogOut className="w-4 h-4" />
+                      <span>Sign Out</span>
+                    </button>
+                  </div>
+                </div>
+              )}
             </div>
           </div>
         </header>
