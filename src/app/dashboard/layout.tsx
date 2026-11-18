@@ -47,23 +47,37 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     if (!isPending && userRole) {
-      // Sync Express JWT token (crucial for Google OAuth social logins)
+      // Sync JWT token from Better Auth /token endpoint (crucial for Google OAuth social logins)
       if (session?.user?.email && !getStoredToken()) {
-        apiFetch("/api/auth/jwt", {
-          method: "POST",
-          body: JSON.stringify({
-            email: session.user.email,
-            name: session.user.name,
-            role: userRole,
-          }),
-        })
-          .then((res) => {
-            if (res.token) {
-              setStoredToken(res.token);
+        fetch("/api/auth/token", { credentials: "include" })
+          .then((r) => r.json())
+          .then((data) => {
+            if (data?.token) {
+              setStoredToken(data.token);
+            } else {
+              apiFetch("/api/auth/jwt", {
+                method: "POST",
+                body: JSON.stringify({
+                  email: session.user.email,
+                  name: session.user.name,
+                  role: userRole,
+                }),
+              }).then((res) => {
+                if (res.token) setStoredToken(res.token);
+              });
             }
           })
-          .catch((err) => {
-            console.warn("Auto-sync JWT error:", err);
+          .catch(() => {
+            apiFetch("/api/auth/jwt", {
+              method: "POST",
+              body: JSON.stringify({
+                email: session.user.email,
+                name: session.user.name,
+                role: userRole,
+              }),
+            }).then((res) => {
+              if (res.token) setStoredToken(res.token);
+            });
           });
       }
 

@@ -47,18 +47,26 @@ function SignInContent() {
         return;
       }
 
-      // 2. Fetch Express backend JWT token
+      // 2. Fetch JWT token from Better Auth /token endpoint
       try {
-        const tokenRes = await apiFetch("/api/auth/jwt", {
-          method: "POST",
-          body: JSON.stringify({ email: targetEmail }),
-        });
+        const tokenRes = await fetch("/api/auth/token", { credentials: "include" })
+          .then((r) => r.json())
+          .catch(() => null);
 
-        if (tokenRes.token) {
-          setStoredToken(tokenRes.token);
+        let finalToken = tokenRes?.token;
+        if (!finalToken) {
+          const fallbackRes = await apiFetch("/api/auth/jwt", {
+            method: "POST",
+            body: JSON.stringify({ email: targetEmail }),
+          });
+          finalToken = fallbackRes?.token;
         }
 
-        const userRole = tokenRes.user?.role || (data?.user as any)?.role || "customer";
+        if (finalToken) {
+          setStoredToken(finalToken);
+        }
+
+        const userRole = (data?.user as any)?.role || "customer";
 
         toast.success(`Welcome back, ${tokenRes.user?.name || data?.user?.name || "User"}!`);
 

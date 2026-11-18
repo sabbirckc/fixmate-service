@@ -72,19 +72,27 @@ export default function SignUpPage() {
         return;
       }
 
-      // 2. Obtain Express JWT token
+      // 2. Obtain JWT token from Better Auth /token endpoint
       try {
-        const tokenRes = await apiFetch("/api/auth/jwt", {
-          method: "POST",
-          body: JSON.stringify({
-            email: email.trim().toLowerCase(),
-            name: name.trim(),
-            role,
-          }),
-        });
+        const tokenRes = await fetch("/api/auth/token", { credentials: "include" })
+          .then((r) => r.json())
+          .catch(() => null);
 
-        if (tokenRes.token) {
-          setStoredToken(tokenRes.token);
+        let finalToken = tokenRes?.token;
+        if (!finalToken) {
+          const fallbackRes = await apiFetch("/api/auth/jwt", {
+            method: "POST",
+            body: JSON.stringify({
+              email: email.trim().toLowerCase(),
+              name: name.trim(),
+              role,
+            }),
+          });
+          finalToken = fallbackRes?.token;
+        }
+
+        if (finalToken) {
+          setStoredToken(finalToken);
         }
       } catch (tokenErr) {
         console.warn("Could not fetch server JWT token:", tokenErr);
