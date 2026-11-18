@@ -1,5 +1,6 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
+import { jwt } from "better-auth/plugins";
 import { MongoClient } from "mongodb";
 
 const uri = process.env.MONGODB_URI || "";
@@ -64,5 +65,16 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://localhost:5000",
     "https://fixmate-service.vercel.app"
+  ],
+  plugins: [
+    jwt({
+      jwt: {
+        definePayload: (session) => ({
+          role: (session.user as any).role || "customer",
+          phone: (session.user as any).phone || "",
+          area: (session.user as any).area || "",
+        }),
+      },
+    }),
   ],
 });
