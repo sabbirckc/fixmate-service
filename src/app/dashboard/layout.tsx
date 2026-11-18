@@ -131,9 +131,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const adminLinks = [
     { name: "Overview", href: "/dashboard/admin", icon: LayoutDashboard },
-    { name: "Manage Users", href: "/dashboard/admin/users", icon: Users },
+    { name: "Customer Bookings", href: "/dashboard/admin/bookings", icon: Calendar },
     { name: "Service Approvals", href: "/dashboard/admin/services", icon: CheckSquare },
-    { name: "All Bookings", href: "/dashboard/admin/bookings", icon: Calendar },
+    { name: "Manage Users", href: "/dashboard/admin/users", icon: Users },
     { name: "Transactions", href: "/dashboard/admin/transactions", icon: DollarSign },
   ];
 

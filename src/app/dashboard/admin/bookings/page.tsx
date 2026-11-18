@@ -51,7 +51,7 @@ export default function AdminBookingsPage() {
           </p>
         </div>
 
-        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 self-start sm:self-auto">
+        <div className="flex flex-wrap sm:flex-nowrap items-center gap-1.5 overflow-x-auto pb-1 max-w-full scrollbar-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden self-start sm:self-auto">
           {statusFilters.map((sf) => (
             <button
               key={sf.value}
