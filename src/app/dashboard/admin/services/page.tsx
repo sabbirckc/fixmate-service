@@ -78,7 +78,7 @@ export default function AdminServicesPage() {
         </div>
 
         {/* Filter Pills */}
-        <div className="flex items-center gap-1.5 self-start sm:self-auto">
+        <div className="flex items-center gap-1.5 overflow-x-auto pb-1 max-w-full self-start sm:self-auto">
           {[
             { label: "Pending Approvals", value: "pending" },
             { label: "Approved Services", value: "approved" },

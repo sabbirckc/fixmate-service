@@ -199,7 +199,7 @@ function BrowseServicesContent() {
           </form>
 
           {/* Category Filter Pills */}
-          <div className="mt-6 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
+          <div className="-mx-4 px-4 sm:mx-0 sm:px-0 mt-6 flex items-center gap-2 overflow-x-auto pb-2 scrollbar-none">
             {CATEGORIES.map((cat) => {
               const isSelected = currentCategory === cat.value;
               return (
@@ -207,7 +207,7 @@ function BrowseServicesContent() {
                   key={cat.value}
                   type="button"
                   onClick={() => updateUrlParams({ category: cat.value })}
-                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer ${
+                  className={`px-3.5 py-1.5 rounded-full text-xs font-medium whitespace-nowrap transition-all cursor-pointer shrink-0 ${
                     isSelected
                       ? "bg-blue-600 text-white shadow-sm font-semibold"
                       : "bg-slate-100 dark:bg-zinc-800 text-slate-600 dark:text-zinc-300 hover:bg-slate-200 dark:hover:bg-zinc-700"
@@ -222,11 +222,11 @@ function BrowseServicesContent() {
       </section>
 
       {/* Main Content Area */}
-      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-10 w-full">
+      <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-10 w-full">
         {/* Controls Bar */}
         <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8 pb-4 border-b border-slate-200 dark:border-zinc-800">
-          <div className="flex items-center gap-2 text-sm text-slate-500 dark:text-zinc-400">
-            <SlidersHorizontal className="w-4 h-4 text-blue-600" />
+          <div className="flex flex-wrap items-center gap-2 text-xs sm:text-sm text-slate-500 dark:text-zinc-400">
+            <SlidersHorizontal className="w-4 h-4 text-blue-600 shrink-0" />
             <span>
               Showing <strong className="text-slate-900 dark:text-white">{services.length}</strong> of{" "}
               <strong className="text-slate-900 dark:text-white">{totalCount}</strong> services
@@ -235,7 +235,7 @@ function BrowseServicesContent() {
               <button
                 type="button"
                 onClick={resetAllFilters}
-                className="ml-3 inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-medium cursor-pointer"
+                className="ml-2 inline-flex items-center gap-1 text-xs text-rose-600 hover:text-rose-700 font-medium cursor-pointer"
               >
                 <RotateCcw className="w-3 h-3" />
                 <span>Reset Filters</span>
@@ -244,12 +244,12 @@ function BrowseServicesContent() {
           </div>
 
           {/* Dropdown Filters */}
-          <div className="flex items-center gap-3">
+          <div className="flex flex-wrap sm:flex-nowrap items-center gap-2 sm:gap-3 w-full sm:w-auto">
             {/* Service Mode Selector */}
             <select
               value={currentMode}
               onChange={(e) => updateUrlParams({ serviceMode: e.target.value })}
-              className="px-3 py-2 rounded-xl text-xs font-medium border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-medium border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
             >
               {SERVICE_MODES.map((mode) => (
                 <option key={mode.value} value={mode.value}>
@@ -262,7 +262,7 @@ function BrowseServicesContent() {
             <select
               value={currentSort}
               onChange={(e) => updateUrlParams({ sort: e.target.value })}
-              className="px-3 py-2 rounded-xl text-xs font-medium border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
+              className="flex-1 sm:flex-none px-3 py-2 rounded-xl text-xs font-medium border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-200 focus:outline-none focus:ring-2 focus:ring-blue-500 shadow-sm cursor-pointer"
             >
               {SORT_OPTIONS.map((opt) => (
                 <option key={opt.value} value={opt.value}>
@@ -334,12 +334,13 @@ function BrowseServicesContent() {
 
         {/* Pagination Bar */}
         {totalPages > 1 && (
-          <div className="mt-12 flex items-center justify-center gap-2">
+          <div className="mt-12 flex flex-wrap items-center justify-center gap-1.5 sm:gap-2">
             <button
               type="button"
               disabled={currentPage <= 1}
               onClick={() => updateUrlParams({ page: currentPage - 1 })}
-              className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer shadow-sm"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer shadow-sm"
+              title="Previous Page"
             >
               <ChevronLeft className="w-4 h-4" />
             </button>
@@ -351,10 +352,10 @@ function BrowseServicesContent() {
                   key={pg}
                   type="button"
                   onClick={() => updateUrlParams({ page: pg })}
-                  className={`w-10 h-10 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
+                  className={`w-9 h-9 sm:w-10 sm:h-10 rounded-xl text-xs font-semibold transition-all cursor-pointer ${
                     isCurrent
                       ? "bg-blue-600 text-white shadow-md shadow-blue-500/20"
-                      : "border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50"
+                      : "border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-800"
                   }`}
                 >
                   {pg}
@@ -366,7 +367,8 @@ function BrowseServicesContent() {
               type="button"
               disabled={currentPage >= totalPages}
               onClick={() => updateUrlParams({ page: currentPage + 1 })}
-              className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 cursor-pointer shadow-sm"
+              className="p-2.5 rounded-xl border border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-900 text-slate-700 dark:text-zinc-300 disabled:opacity-40 disabled:cursor-not-allowed hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer shadow-sm"
+              title="Next Page"
             >
               <ChevronRight className="w-4 h-4" />
             </button>

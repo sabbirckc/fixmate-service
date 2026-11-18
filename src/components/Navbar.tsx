@@ -221,7 +221,7 @@ export default function Navbar() {
 
       {/* Mobile Drawer */}
       {mobileMenuOpen && (
-        <div className="md:hidden border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 pt-3 pb-6 space-y-3">
+        <div className="md:hidden border-b border-slate-200 dark:border-zinc-800 bg-white dark:bg-zinc-950 px-4 pt-3 pb-6 space-y-4 animate-in slide-in-from-top-2 duration-150">
           <nav className="space-y-1">
             {navLinks.map((link) => {
               const isActive = pathname === link.href || (link.href !== "/" && pathname.startsWith(link.href));
@@ -229,9 +229,9 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
-                  className={`block px-3 py-2 rounded-lg text-base font-medium ${
+                  className={`block px-3.5 py-2.5 rounded-xl text-base font-medium transition-colors ${
                     isActive
-                      ? "text-blue-600 bg-blue-50 dark:bg-blue-950/40 font-semibold"
+                      ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 font-semibold"
                       : "text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900"
                   }`}
                 >
@@ -244,46 +244,57 @@ export default function Navbar() {
           <div className="pt-3 border-t border-slate-200 dark:border-zinc-800">
             {user ? (
               <div className="space-y-2">
-                <div className="flex items-center gap-3 px-3 py-2">
-                  <div className="w-10 h-10 rounded-full bg-blue-100 text-blue-600 flex items-center justify-center font-bold">
-                    {user.name?.charAt(0).toUpperCase() || "U"}
+                <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800">
+                  <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold shrink-0">
+                    {user.image ? (
+                      <img src={user.image} alt={user.name || "User"} className="w-full h-full object-cover" />
+                    ) : (
+                      user.name?.charAt(0).toUpperCase() || "U"
+                    )}
                   </div>
-                  <div>
-                    <p className="text-sm font-bold text-slate-900 dark:text-white">{user.name}</p>
-                    <div className="mt-0.5">{getRoleBadge(userRole)}</div>
+                  <div className="min-w-0 flex-1">
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                    <p className="text-xs text-slate-400 truncate">{user.email}</p>
+                    <div className="mt-1">{getRoleBadge(userRole)}</div>
                   </div>
                 </div>
-                <Link
-                  href={getDashboardLink()}
-                  className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50"
-                >
-                  Dashboard
-                </Link>
-                <Link
-                  href="/dashboard/profile"
-                  className="block px-3 py-2 rounded-lg text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50"
-                >
-                  Update Profile
-                </Link>
-                <button
-                  type="button"
-                  onClick={handleSignOut}
-                  className="w-full text-left px-3 py-2 rounded-lg text-sm font-medium text-rose-600 hover:bg-rose-50"
-                >
-                  Sign Out
-                </button>
+
+                <div className="space-y-1 pt-1">
+                  <Link
+                    href={getDashboardLink()}
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
+                  >
+                    <LayoutDashboard className="w-4 h-4 text-blue-600 dark:text-blue-400" />
+                    <span>Dashboard</span>
+                  </Link>
+                  <Link
+                    href="/dashboard/profile"
+                    className="flex items-center gap-2.5 px-3.5 py-2.5 rounded-xl text-sm font-medium text-slate-700 dark:text-zinc-300 hover:bg-slate-50 dark:hover:bg-zinc-900 transition-colors"
+                  >
+                    <UserCheck className="w-4 h-4 text-slate-500" />
+                    <span>Update Profile</span>
+                  </Link>
+                  <button
+                    type="button"
+                    onClick={handleSignOut}
+                    className="w-full flex items-center gap-2.5 text-left px-3.5 py-2.5 rounded-xl text-sm font-medium text-rose-600 dark:text-rose-400 hover:bg-rose-50 dark:hover:bg-rose-950/30 transition-colors cursor-pointer"
+                  >
+                    <LogOut className="w-4 h-4" />
+                    <span>Sign Out</span>
+                  </button>
+                </div>
               </div>
             ) : (
               <div className="grid grid-cols-2 gap-3 pt-2">
                 <Link
                   href="/sign-in"
-                  className="text-center py-2.5 rounded-xl border border-slate-300 text-slate-700 font-medium"
+                  className="text-center py-2.5 rounded-xl border border-slate-300 dark:border-zinc-700 text-slate-700 dark:text-zinc-200 hover:bg-slate-50 dark:hover:bg-zinc-900 font-medium text-sm transition-colors"
                 >
                   Sign In
                 </Link>
                 <Link
                   href="/sign-up"
-                  className="text-center py-2.5 rounded-xl bg-blue-600 text-white font-medium shadow-md shadow-blue-500/20"
+                  className="text-center py-2.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-medium text-sm shadow-md shadow-blue-500/20 transition-all"
                 >
                   Sign Up
                 </Link>

@@ -51,7 +51,7 @@ export default function AboutPage() {
 
       {/* Hero Section */}
       <section className="pt-16 pb-20 bg-gradient-to-b from-blue-50/60 via-slate-50 to-slate-50 dark:from-zinc-900/60 dark:via-zinc-950 dark:to-zinc-950">
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 text-center max-w-3xl">
+        <div className="max-w-3xl mx-auto px-4 sm:px-6 lg:px-8 text-center">
           <div className="inline-flex items-center gap-2 px-3.5 py-1.5 rounded-full bg-blue-100 dark:bg-blue-950 text-blue-700 dark:text-blue-300 text-xs font-semibold mb-4">
             <Wrench className="w-3.5 h-3.5" />
             <span>Our Mission & Story</span>
