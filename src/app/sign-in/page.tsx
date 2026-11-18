@@ -68,17 +68,13 @@ function SignInContent() {
 
         const userRole = (data?.user as any)?.role || "customer";
 
-        toast.success(`Welcome back, ${tokenRes.user?.name || data?.user?.name || "User"}!`);
+        toast.success(`Welcome back, ${tokenRes?.user?.name || data?.user?.name || "User"}!`);
 
-        // 3. Redirect logic: Move to home page after login
-        const destination = callbackUrl && !callbackUrl.includes("/sign-in") ? callbackUrl : "/";
-        router.push(destination);
-        router.refresh();
+        // Direct navigation to home page for all users upon login
+        window.location.href = "/";
       } catch (tokenErr) {
         console.warn("JWT sync warning:", tokenErr);
-        const destination = callbackUrl && !callbackUrl.includes("/sign-in") ? callbackUrl : "/";
-        router.push(destination);
-        router.refresh();
+        window.location.href = "/";
       }
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred during login.");
@@ -90,14 +86,12 @@ function SignInContent() {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      const destination = callbackUrl && !callbackUrl.includes("/sign-in") ? callbackUrl : "/";
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: destination,
+        callbackURL: "/",
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign in with Google");
-    } finally {
       setLoading(false);
     }
   };
