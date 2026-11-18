@@ -36,10 +36,14 @@ function PaymentSuccessContent() {
     const verify = async () => {
       try {
         setLoading(true);
-        const params: Record<string, string> = { session_id: sessionId };
-        if (bookingId) params.booking_id = bookingId;
-
-        const res = await apiFetch("/api/payments/verify", { params });
+        // POST to Express API: Verifies session & updates MongoDB
+        const res = await apiFetch("/api/payments/verify", {
+          method: "POST",
+          body: JSON.stringify({
+            session_id: sessionId,
+            booking_id: bookingId || undefined,
+          }),
+        });
 
         if (res.success && res.payment) {
           setPayment(res.payment);

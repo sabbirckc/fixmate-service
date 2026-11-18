@@ -96,14 +96,24 @@ export default function CustomerBookingsPage() {
   const handlePayNow = async (booking: Booking) => {
     setPayingBookingId(booking._id);
     try {
-      const res = await apiFetch("/api/payments/create-checkout-session", {
+      // 1. Call Next.js API Route (User clicks Pay -> Next.js API Route -> Stripe creates Session)
+      const res = await fetch("/api/checkout", {
         method: "POST",
-        body: JSON.stringify({ bookingId: booking._id }),
-      });
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          bookingId: booking._id,
+          amount: booking.finalAmount || booking.basePrice,
+          serviceTitle: booking.serviceTitle,
+          technicianName: booking.technicianName,
+          category: booking.category,
+          serviceImage: booking.serviceImage,
+          customerEmail: booking.customerEmail,
+        }),
+      }).then((r) => r.json());
 
       if (res.success && res.url) {
         toast.info("Redirecting to secure Stripe Checkout...", { duration: 2000 });
-        window.location.href = res.url;
+        window.location.href = res.url; // 2. Redirect to Stripe Hosted UI
       } else {
         throw new Error(res.message || "Could not initialize Stripe session");
       }
