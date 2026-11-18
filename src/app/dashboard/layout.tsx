@@ -5,7 +5,7 @@ import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import ThemeToggle from "@/components/ThemeToggle";
 import { authClient } from "@/lib/auth-client";
-import { removeStoredToken } from "@/lib/api-client";
+import { getStoredToken, setStoredToken, removeStoredToken, apiFetch } from "@/lib/api-client";
 import type { Role } from "@/types";
 import {
   Wrench,
@@ -47,6 +47,26 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     }
 
     if (!isPending && userRole) {
+      // Sync Express JWT token (crucial for Google OAuth social logins)
+      if (session?.user?.email && !getStoredToken()) {
+        apiFetch("/api/auth/jwt", {
+          method: "POST",
+          body: JSON.stringify({
+            email: session.user.email,
+            name: session.user.name,
+            role: userRole,
+          }),
+        })
+          .then((res) => {
+            if (res.token) {
+              setStoredToken(res.token);
+            }
+          })
+          .catch((err) => {
+            console.warn("Auto-sync JWT error:", err);
+          });
+      }
+
       // Role route guard
       if (pathname.startsWith("/dashboard/admin") && userRole !== "admin") {
         toast.error("Access forbidden: Administrator privileges required.");
