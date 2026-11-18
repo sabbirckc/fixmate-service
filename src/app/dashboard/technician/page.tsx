@@ -16,6 +16,7 @@ import {
   Sparkles,
   ShieldCheck,
   Check,
+  CreditCard,
 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -56,14 +57,26 @@ export default function TechnicianOverviewPage() {
   const handleUpgradePro = async () => {
     setUpgrading(true);
     try {
-      const res = await apiFetch("/api/users/upgrade-pro", { method: "POST" });
-      if (res.success) {
-        toast.success(res.message || "Upgraded to Verified Pro plan!");
-        setProfile((prev: any) => ({ ...prev, plan: "pro" }));
+      toast.info("Connecting to secure Stripe Checkout...", { duration: 2000 });
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "pro_upgrade",
+          amount: 29,
+          serviceTitle: "FixMate Verified Pro Technician Plan",
+          technicianEmail: profile?.email,
+          technicianName: profile?.name,
+        }),
+      }).then((r) => r.json());
+
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        throw new Error(res.message || "Could not initialize Stripe session");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to upgrade to Pro plan");
-    } finally {
+      toast.error(err.message || "Failed to initiate Pro upgrade via Stripe");
       setUpgrading(false);
     }
   };
@@ -162,8 +175,8 @@ export default function TechnicianOverviewPage() {
               onClick={handleUpgradePro}
               className="inline-flex items-center justify-center gap-2 px-5 py-3 rounded-2xl bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-700 hover:to-orange-700 text-white font-bold text-xs shadow-lg shadow-amber-500/20 shrink-0 cursor-pointer disabled:opacity-50"
             >
-              <Sparkles className="w-4 h-4 text-amber-200" />
-              <span>{upgrading ? "Upgrading..." : "Upgrade to Pro ($29)"}</span>
+              <CreditCard className="w-4 h-4 text-amber-200" />
+              <span>{upgrading ? "Connecting to Stripe..." : "Pay $29 & Upgrade to Pro (Stripe)"}</span>
             </button>
           )}
         </div>

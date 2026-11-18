@@ -20,6 +20,7 @@ import {
   Wrench,
   Sparkles,
   ShieldAlert,
+  CreditCard,
 } from "lucide-react";
 
 const CATEGORIES: ServiceCategory[] = [
@@ -76,14 +77,26 @@ export default function AddServicePage() {
   const handleUpgradePro = async () => {
     setUpgrading(true);
     try {
-      const res = await apiFetch("/api/users/upgrade-pro", { method: "POST" });
-      if (res.success) {
-        toast.success(res.message || "Upgraded to Verified Pro plan!");
-        setIsPro(true);
+      toast.info("Connecting to secure Stripe Checkout...", { duration: 2000 });
+      const res = await fetch("/api/checkout", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          type: "pro_upgrade",
+          amount: 29,
+          serviceTitle: "FixMate Verified Pro Technician Plan",
+          technicianEmail: user?.email,
+          technicianName: user?.name,
+        }),
+      }).then((r) => r.json());
+
+      if (res.success && res.url) {
+        window.location.href = res.url;
+      } else {
+        throw new Error(res.message || "Failed to initialize Stripe checkout session");
       }
     } catch (err: any) {
-      toast.error(err.message || "Failed to upgrade to Pro");
-    } finally {
+      toast.error(err.message || "Failed to initiate Stripe Pro upgrade");
       setUpgrading(false);
     }
   };
@@ -189,10 +202,10 @@ export default function AddServicePage() {
             type="button"
             disabled={upgrading}
             onClick={handleUpgradePro}
-            className="inline-flex items-center justify-center gap-2 px-4 py-2 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer disabled:opacity-50"
+            className="inline-flex items-center justify-center gap-2 px-4 py-2.5 rounded-xl bg-amber-600 hover:bg-amber-700 text-white font-bold text-xs shadow-md shrink-0 cursor-pointer disabled:opacity-50"
           >
-            <Sparkles className="w-4 h-4" />
-            <span>{upgrading ? "Upgrading..." : "Upgrade to Pro ($29)"}</span>
+            <CreditCard className="w-4 h-4" />
+            <span>{upgrading ? "Connecting to Stripe..." : "Pay $29 & Upgrade to Pro (Stripe)"}</span>
           </button>
         </div>
       )}
