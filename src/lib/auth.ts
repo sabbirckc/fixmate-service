@@ -64,8 +64,11 @@ export const auth = betterAuth({
   trustedOrigins: [
     "http://localhost:3000",
     "http://localhost:5000",
-    "https://fixmate-service.vercel.app"
-  ],
+    "https://fixmate-service.vercel.app",
+    process.env.BETTER_AUTH_URL,
+    process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
+    process.env.CLIENT_URL,
+  ].filter(Boolean) as string[],
   plugins: [
     jwt({
       jwt: {
