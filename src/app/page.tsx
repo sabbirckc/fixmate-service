@@ -27,7 +27,6 @@ async function getFeaturedServices(): Promise<Service[]> {
   try {
     const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
     const res = await fetch(`${serverUrl}/api/services/featured`, {
-      next: { revalidate: 60 },
       cache: "no-store",
     });
 

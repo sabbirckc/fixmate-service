@@ -1,3 +1,5 @@
+"use client";
+
 import Link from "next/link";
 import { Wrench, Mail, Phone, MapPin, Globe } from "lucide-react";
 
