@@ -8,6 +8,7 @@ const client = new MongoClient(uri);
 const db = client.db("fixmate-service");
 
 export const auth = betterAuth({
+  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
   database: mongodbAdapter(db),
   emailAndPassword: {
     enabled: true,
@@ -65,7 +66,6 @@ export const auth = betterAuth({
     "http://localhost:3000",
     "http://localhost:5000",
     "https://fixmate-service.vercel.app",
-    process.env.BETTER_AUTH_URL,
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
     process.env.CLIENT_URL,
   ].filter(Boolean) as string[],
