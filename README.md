@@ -11,15 +11,13 @@ Verified technicians list their repair services, customers browse and submit rep
 - **Client GitHub Repository**: [https://github.com/sabbirckc/fixmate-service](https://github.com/sabbirckc/fixmate-service)
 - **Server GitHub Repository**: [https://github.com/sabbirckc/fixmate-service-server](https://github.com/sabbirckc/fixmate-service-server)
 
-### 🔑 Test Credentials (Quick Reviewer Accounts)
+### 🔑 Test Credentials (Reviewer Accounts)
 | Role | Email | Password | Access & Responsibilities |
 | :--- | :--- | :--- | :--- |
 | **Administrator** | `admin@fixmate.com` | `Password123` | Platform overview, role management, service moderation queue, all bookings & transactions |
 | **Technician 1** | `technician@fixmate.com` | `Password123` | Smartphone & laptop specialist, adds services with ImgBB, accepts/rejects jobs, advances status pipeline |
 | **Technician 2** | `karim@fixmate.com` | `Password123` | Inverter AC & refrigerator specialist |
 | **Customer** | `customer@fixmate.com` | `Password123` | Books repairs, tracks live timeline, cancels requested bookings, pays completed jobs with Stripe |
-
-> **Tip:** You can also use the **1-click quick login buttons** located directly on the `/sign-in` page for instant testing!
 
 ---
 
