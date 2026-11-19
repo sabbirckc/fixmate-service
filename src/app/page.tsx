@@ -22,7 +22,10 @@ import {
   Users,
 } from "lucide-react";
 
-// Fetch featured services from Express backend with ISR / revalidation
+// Force dynamic rendering since featured services are fetched from the backend server
+export const dynamic = "force-dynamic";
+
+// Fetch featured services from Express backend
 async function getFeaturedServices(): Promise<Service[]> {
   try {
     const serverUrl = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";

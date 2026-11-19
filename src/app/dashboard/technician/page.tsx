@@ -4,6 +4,8 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import type { Service, Booking } from "@/types";
+import StatCard from "@/components/dashboard/StatCard";
+import StatusDistributionChart from "@/components/dashboard/StatusDistributionChart";
 import {
   Wrench,
   CheckCircle2,
@@ -107,35 +109,27 @@ export default function TechnicianOverviewPage() {
 
       {/* KPI Stats Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
-        <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center font-bold">
-            <FolderOpen className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Total Services</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{totalServices}</p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold">
-            <CheckCircle2 className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Approved Services</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{approvedServices}</p>
-          </div>
-        </div>
-
-        <div className="p-6 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm flex items-center gap-4">
-          <div className="w-12 h-12 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center font-bold">
-            <Clock className="w-6 h-6" />
-          </div>
-          <div>
-            <p className="text-xs font-semibold text-slate-500 uppercase tracking-wider">Pending Requests</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">{pendingRequests}</p>
-          </div>
-        </div>
+        <StatCard
+          title="Total Services"
+          value={totalServices}
+          icon={FolderOpen}
+          color="blue"
+          loading={loading}
+        />
+        <StatCard
+          title="Approved Services"
+          value={approvedServices}
+          icon={CheckCircle2}
+          color="emerald"
+          loading={loading}
+        />
+        <StatCard
+          title="Pending Requests"
+          value={pendingRequests}
+          icon={Clock}
+          color="amber"
+          loading={loading}
+        />
       </div>
 
       {/* Pro Plan Status Banner (Optional Feature 1) */}
@@ -181,6 +175,33 @@ export default function TechnicianOverviewPage() {
           )}
         </div>
       </div>
+
+      {/* Visual Analytics Chart (Requirement: Charts and graphs for quick data visualization) */}
+      <StatusDistributionChart
+        title="My Repair Job Pipeline Analytics"
+        data={[
+          {
+            name: "Requested",
+            count: bookings.filter((b) => b.status === "requested").length,
+            color: "#3b82f6",
+          },
+          {
+            name: "Accepted",
+            count: bookings.filter((b) => b.status === "accepted").length,
+            color: "#6366f1",
+          },
+          {
+            name: "In Progress",
+            count: bookings.filter((b) => b.status === "in-progress").length,
+            color: "#f59e0b",
+          },
+          {
+            name: "Completed",
+            count: bookings.filter((b) => b.status === "completed").length,
+            color: "#10b981",
+          },
+        ]}
+      />
 
       {/* Pending Action Requests Queue */}
       <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-5">

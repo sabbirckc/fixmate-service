@@ -96,26 +96,49 @@ export default function CustomerBookingsPage() {
   const handlePayNow = async (booking: Booking) => {
     setPayingBookingId(booking._id);
     try {
-      // 1. Call Next.js API Route (User clicks Pay -> Next.js API Route -> Stripe creates Session)
-      const res = await fetch("/api/checkout", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          bookingId: booking._id,
-          amount: booking.finalAmount || booking.basePrice,
-          serviceTitle: booking.serviceTitle,
-          technicianName: booking.technicianName,
-          category: booking.category,
-          serviceImage: booking.serviceImage,
-          customerEmail: booking.customerEmail,
-        }),
-      }).then((r) => r.json());
+      // 1. Call protected server API with bookingId per Step 2:
+      // "The client calls a protected server API, e.g. POST /api/payments/create-checkout-session with the bookingId"
+      // "The server loads the booking from the database (never trust an amount sent from the client)"
+      let checkoutUrl = "";
 
-      if (res.success && res.url) {
+      try {
+        const res = await apiFetch("/api/payments/create-checkout-session", {
+          method: "POST",
+          body: JSON.stringify({ bookingId: booking._id }),
+        });
+        if (res.success && res.url) {
+          checkoutUrl = res.url;
+        }
+      } catch (backendErr: any) {
+        console.warn("Express backend checkout failed, falling back to Next.js route:", backendErr);
+      }
+
+      // Fallback to Next.js API route if backend is unavailable
+      if (!checkoutUrl) {
+        const res = await fetch("/api/checkout", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({
+            bookingId: booking._id,
+            amount: booking.finalAmount || booking.basePrice,
+            serviceTitle: booking.serviceTitle,
+            technicianName: booking.technicianName,
+            category: booking.category,
+            serviceImage: booking.serviceImage,
+            customerEmail: booking.customerEmail,
+          }),
+        }).then((r) => r.json());
+
+        if (res.success && res.url) {
+          checkoutUrl = res.url;
+        } else {
+          throw new Error(res.message || "Could not initialize Stripe session");
+        }
+      }
+
+      if (checkoutUrl) {
         toast.info("Redirecting to secure Stripe Checkout...", { duration: 2000 });
-        window.location.href = res.url; // 2. Redirect to Stripe Hosted UI
-      } else {
-        throw new Error(res.message || "Could not initialize Stripe session");
+        window.location.href = checkoutUrl;
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to initiate payment");
@@ -201,7 +224,159 @@ export default function CustomerBookingsPage() {
             <p className="text-xs font-semibold">Loading bookings...</p>
           </div>
         ) : bookings.length > 0 ? (
-          <div className="overflow-x-auto">
+          <>
+            {/* Mobile Cards View (strictly per rubric: "Table (or cards on mobile)") */}
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-zinc-800 p-4 space-y-4">
+              {bookings.map((b) => {
+                const isCompleted = b.status === "completed";
+                const isUnpaid = b.paymentStatus === "unpaid";
+                const isRequested = b.status === "requested";
+
+                return (
+                  <div
+                    key={b._id}
+                    className="pt-4 first:pt-0 rounded-2xl bg-slate-50/50 dark:bg-zinc-800/40 p-4 border border-slate-200/80 dark:border-zinc-700/60 space-y-3"
+                  >
+                    {/* Top Row: Service image, title, category */}
+                    <div className="flex items-start gap-3">
+                      <img
+                        src={b.serviceImage}
+                        alt={b.serviceTitle}
+                        className="w-14 h-14 rounded-xl object-cover bg-slate-100 shrink-0"
+                      />
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">
+                          {b.serviceTitle}
+                        </p>
+                        <span className="text-[11px] text-blue-600 dark:text-blue-400 font-semibold block">
+                          {b.category}
+                        </span>
+                        <p className="text-[11px] text-slate-500 mt-0.5">
+                          Tech: <span className="font-medium text-slate-700 dark:text-zinc-300">{b.technicianName}</span>
+                        </p>
+                      </div>
+                    </div>
+
+                    {/* Metadata Grid */}
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60 dark:border-zinc-700/60">
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase font-bold">Preferred Date</span>
+                        <span className="font-semibold text-slate-700 dark:text-zinc-300">
+                          {new Date(b.preferredDate).toLocaleDateString("en-US", {
+                            month: "short",
+                            day: "numeric",
+                            year: "numeric",
+                          })}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 block uppercase font-bold">
+                          {isCompleted ? "Final Amount" : "Starting Price"}
+                        </span>
+                        <span className="font-black text-slate-900 dark:text-white text-sm">
+                          ${b.finalAmount || b.basePrice}
+                        </span>
+                      </div>
+                    </div>
+
+                    {/* Badges Row */}
+                    <div className="flex items-center justify-between gap-2 pt-1">
+                      <div className="flex items-center gap-1.5 flex-wrap">
+                        {renderStatusBadge(b.status)}
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${
+                            b.paymentStatus === "paid"
+                              ? "bg-emerald-50 text-emerald-700 border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300"
+                              : "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300"
+                          }`}
+                        >
+                          {b.paymentStatus}
+                        </span>
+                      </div>
+
+                      <button
+                        type="button"
+                        onClick={() => setExpandedId(expandedId === b._id ? null : b._id)}
+                        className="p-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-500 hover:text-blue-600 text-xs flex items-center gap-1 cursor-pointer"
+                      >
+                        <span className="text-[10px] font-semibold">Track</span>
+                        {expandedId === b._id ? <ChevronUp className="w-3.5 h-3.5" /> : <ChevronDown className="w-3.5 h-3.5" />}
+                      </button>
+                    </div>
+
+                    {/* Mobile Timeline view if expanded */}
+                    {expandedId === b._id && (
+                      <div className="p-3 bg-white dark:bg-zinc-900 rounded-xl border border-slate-200 dark:border-zinc-800 space-y-2">
+                        <p className="text-[10px] font-bold uppercase tracking-wider text-slate-400 text-center">
+                          Job Status Step Tracker
+                        </p>
+                        <StatusTimeline status={b.status} paymentStatus={b.paymentStatus} />
+                        <div className="text-[11px] text-slate-500 pt-1">
+                          Problem: <span className="text-slate-800 dark:text-zinc-200">{b.problemDescription}</span>
+                        </div>
+                      </div>
+                    )}
+
+                    {/* Action Buttons Row */}
+                    <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                      {isRequested && (
+                        <button
+                          type="button"
+                          onClick={() => openCancelModal(b)}
+                          className="w-full py-2 rounded-xl border border-rose-200 text-rose-600 hover:bg-rose-50 dark:border-rose-800 dark:hover:bg-rose-950/40 text-xs font-semibold transition-colors cursor-pointer text-center"
+                        >
+                          Cancel Booking
+                        </button>
+                      )}
+
+                      {isCompleted && isUnpaid && (
+                        <button
+                          type="button"
+                          disabled={payingBookingId === b._id}
+                          onClick={() => handlePayNow(b)}
+                          className="w-full py-2.5 rounded-xl bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold shadow-md shadow-emerald-500/20 transition-all flex items-center justify-center gap-1.5 cursor-pointer"
+                        >
+                          {payingBookingId === b._id ? (
+                            <Loader2 className="w-3.5 h-3.5 animate-spin" />
+                          ) : (
+                            <CreditCard className="w-3.5 h-3.5" />
+                          )}
+                          <span>Pay Now (${b.finalAmount})</span>
+                        </button>
+                      )}
+
+                      {b.paymentStatus === "paid" && (
+                        <div className="flex items-center gap-2 w-full">
+                          <button
+                            type="button"
+                            onClick={() => openInvoice(b)}
+                            className="flex-1 py-2 rounded-xl border border-slate-200 dark:border-zinc-700 hover:bg-slate-100 dark:hover:bg-zinc-800 text-slate-700 dark:text-zinc-200 text-xs font-semibold flex items-center justify-center gap-1.5 cursor-pointer"
+                          >
+                            <Download className="w-3.5 h-3.5 text-blue-600" />
+                            <span>Invoice</span>
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => openReviewModal(b)}
+                            className="flex-1 py-2 rounded-xl bg-amber-50 dark:bg-amber-950/40 border border-amber-200 dark:border-amber-800 hover:bg-amber-100 text-amber-700 dark:text-amber-300 text-xs font-semibold flex items-center justify-center gap-1 cursor-pointer"
+                          >
+                            <Star className="w-3.5 h-3.5 text-amber-500 fill-amber-400" />
+                            <span>{b.rating ? `${b.rating}★ Reviewed` : "Review"}</span>
+                          </button>
+                        </div>
+                      )}
+
+                      {!isRequested && !(isCompleted && isUnpaid) && b.paymentStatus !== "paid" && (
+                        <span className="text-[11px] text-slate-400 font-medium">Job In Progress</span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
             <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 text-slate-500 font-bold uppercase tracking-wider">
@@ -373,6 +548,7 @@ export default function CustomerBookingsPage() {
               </tbody>
             </table>
           </div>
+        </>
         ) : (
           <div className="py-20 text-center px-4">
             <Wrench className="w-12 h-12 text-slate-300 dark:text-zinc-700 mx-auto mb-3" />

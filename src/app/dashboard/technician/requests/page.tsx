@@ -31,6 +31,11 @@ export default function TechnicianRequestsPage() {
   const [finalAmountInput, setFinalAmountInput] = useState("");
   const [updating, setUpdating] = useState(false);
 
+  // Reject Confirmation Modal State (Per Requirement 5: Confirmation Modals)
+  const [rejectModalOpen, setRejectModalOpen] = useState(false);
+  const [rejectTargetBooking, setRejectTargetBooking] = useState<Booking | null>(null);
+  const [rejecting, setRejecting] = useState(false);
+
   const fetchRequests = async () => {
     try {
       setLoading(true);
@@ -82,6 +87,25 @@ export default function TechnicianRequestsPage() {
     setActiveBooking(b);
     setFinalAmountInput(String(b.finalAmount || b.basePrice));
     setCompleteModalOpen(true);
+  };
+
+  // Open Reject Confirmation Modal
+  const openRejectModal = (b: Booking) => {
+    setRejectTargetBooking(b);
+    setRejectModalOpen(true);
+  };
+
+  // Handle Confirm Reject
+  const handleConfirmReject = async () => {
+    if (!rejectTargetBooking) return;
+    setRejecting(true);
+    try {
+      await updateStatus(rejectTargetBooking._id, "rejected");
+      setRejectModalOpen(false);
+      setRejectTargetBooking(null);
+    } finally {
+      setRejecting(false);
+    }
   };
 
   const handleCompleteSubmit = (e: React.FormEvent) => {
@@ -238,7 +262,7 @@ export default function TechnicianRequestsPage() {
                             <button
                               type="button"
                               disabled={updating}
-                              onClick={() => updateStatus(b._id, "rejected")}
+                              onClick={() => openRejectModal(b)}
                               className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[11px] font-semibold cursor-pointer"
                             >
                               <X className="w-3.5 h-3.5" />
@@ -350,6 +374,42 @@ export default function TechnicianRequestsPage() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* Reject Confirmation Modal (Requirement 5) */}
+      {rejectModalOpen && rejectTargetBooking && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-slate-950/60 backdrop-blur-sm animate-in fade-in duration-150">
+          <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-2xl border border-slate-200 dark:border-zinc-800 p-5 sm:p-6 space-y-4">
+            <div className="w-12 h-12 rounded-2xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center mx-auto">
+              <AlertCircle className="w-6 h-6" />
+            </div>
+
+            <div className="text-center">
+              <h3 className="text-lg font-bold text-slate-900 dark:text-white">Reject Repair Request?</h3>
+              <p className="text-xs text-slate-500 mt-1">
+                Are you sure you want to decline this request for <strong>"{rejectTargetBooking.serviceTitle}"</strong> from <strong>{rejectTargetBooking.customerName}</strong>?
+              </p>
+            </div>
+
+            <div className="flex flex-col-reverse sm:flex-row items-stretch sm:items-center justify-end gap-2 sm:gap-3 pt-3">
+              <button
+                type="button"
+                onClick={() => setRejectModalOpen(false)}
+                className="w-full sm:flex-1 py-2.5 rounded-xl border border-slate-200 dark:border-zinc-700 text-slate-700 dark:text-zinc-300 text-xs font-semibold hover:bg-slate-50 dark:hover:bg-zinc-800 cursor-pointer text-center"
+              >
+                No, Keep Request
+              </button>
+              <button
+                type="button"
+                disabled={rejecting}
+                onClick={handleConfirmReject}
+                className="w-full sm:flex-1 py-2.5 rounded-xl bg-rose-600 hover:bg-rose-700 text-white text-xs font-bold shadow-md shadow-rose-500/20 cursor-pointer text-center"
+              >
+                {rejecting ? "Rejecting..." : "Yes, Reject Request"}
+              </button>
+            </div>
           </div>
         </div>
       )}

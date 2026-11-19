@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, Suspense } from "react";
+import { useState, useEffect, Suspense } from "react";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { toast } from "sonner";
-import { Wrench, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Wrench, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch, setStoredToken } from "@/lib/api-client";
 
@@ -12,11 +12,32 @@ function SignInContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const callbackUrl = searchParams.get("callbackUrl");
+  const { data: session, isPending } = authClient.useSession();
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // If already logged in, redirect directly to their dashboard
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      const userRole = (session.user as any)?.role || "customer";
+      const defaultDashboard =
+        userRole === "admin"
+          ? "/dashboard/admin"
+          : userRole === "technician"
+          ? "/dashboard/technician"
+          : "/dashboard/customer";
+
+      const destination =
+        callbackUrl && !callbackUrl.includes("/sign-in") && !callbackUrl.includes("/sign-up")
+          ? callbackUrl
+          : defaultDashboard;
+
+      router.replace(destination);
+    }
+  }, [session, isPending, router, callbackUrl]);
 
   const handleSignIn = async (e?: React.FormEvent, customEmail?: string, customPassword?: string) => {
     if (e) e.preventDefault();
@@ -58,24 +79,35 @@ function SignInContent() {
           const fallbackRes = await apiFetch("/api/auth/jwt", {
             method: "POST",
             body: JSON.stringify({ email: targetEmail }),
-          });
+          }).catch(() => null);
           finalToken = fallbackRes?.token;
         }
 
         if (finalToken) {
           setStoredToken(finalToken);
         }
-
-        const userRole = (data?.user as any)?.role || "customer";
-
-        toast.success(`Welcome back, ${tokenRes?.user?.name || data?.user?.name || "User"}!`);
-
-        // Direct navigation to home page for all users upon login
-        window.location.href = "/";
       } catch (tokenErr) {
         console.warn("JWT sync warning:", tokenErr);
-        window.location.href = "/";
       }
+
+      const userRole = (data?.user as any)?.role || "customer";
+      const defaultDashboard =
+        userRole === "admin"
+          ? "/dashboard/admin"
+          : userRole === "technician"
+          ? "/dashboard/technician"
+          : "/dashboard/customer";
+
+      const destination =
+        callbackUrl && !callbackUrl.includes("/sign-in") && !callbackUrl.includes("/sign-up")
+          ? callbackUrl
+          : defaultDashboard;
+
+      toast.success(`Welcome back, ${data?.user?.name || "User"}!`);
+
+      // Client-side navigation so the toast notification remains visible
+      router.push(destination);
+      router.refresh();
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred during login.");
     } finally {
@@ -86,15 +118,28 @@ function SignInContent() {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
+      const destination =
+        callbackUrl && !callbackUrl.includes("/sign-in") && !callbackUrl.includes("/sign-up")
+          ? callbackUrl
+          : "/dashboard/customer";
+
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/",
+        callbackURL: destination,
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign in with Google");
       setLoading(false);
     }
   };
+
+  if (isPending || session?.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-500">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 px-4 py-8 sm:py-12">

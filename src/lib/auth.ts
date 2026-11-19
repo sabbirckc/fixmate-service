@@ -27,7 +27,8 @@ export const auth = betterAuth({
           return {
             data: {
               ...user,
-              role: (user as any).role || "customer",
+              // Admin cannot be signed up; validate and enforce customer or technician
+              role: (user as any).role === "technician" ? "technician" : "customer",
             },
           };
         },
@@ -64,7 +65,7 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     "http://localhost:3000",
-    "http://localhost:5000",
+    process.env.NEXT_PUBLIC_SERVER_URL,
     "https://fixmate-service.vercel.app",
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
     process.env.CLIENT_URL,

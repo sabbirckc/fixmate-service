@@ -1,22 +1,37 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Wrench, User, Hammer, Check, X, Eye, EyeOff, ArrowRight } from "lucide-react";
+import { Wrench, User, Hammer, Check, X, Eye, EyeOff, ArrowRight, Loader2 } from "lucide-react";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch, setStoredToken } from "@/lib/api-client";
 import type { Role } from "@/types";
 
 export default function SignUpPage() {
   const router = useRouter();
+  const { data: session, isPending } = authClient.useSession();
   const [name, setName] = useState("");
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [role, setRole] = useState<"customer" | "technician">("customer");
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
+
+  // If already logged in, redirect directly to their dashboard
+  useEffect(() => {
+    if (!isPending && session?.user) {
+      const userRole = (session.user as any)?.role || "customer";
+      const targetDashboard =
+        userRole === "admin"
+          ? "/dashboard/admin"
+          : userRole === "technician"
+          ? "/dashboard/technician"
+          : "/dashboard/customer";
+      router.replace(targetDashboard);
+    }
+  }, [session, isPending, router]);
 
   // Password validation rules
   const hasMinLength = password.length >= 6;
@@ -112,6 +127,14 @@ export default function SignUpPage() {
       setLoading(false);
     }
   };
+
+  if (isPending || session?.user) {
+    return (
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-500">
+        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 px-4 py-8 sm:py-12">

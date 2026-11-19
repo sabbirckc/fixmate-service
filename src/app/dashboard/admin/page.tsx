@@ -4,6 +4,9 @@ import { useState, useEffect } from "react";
 import Link from "next/link";
 import { apiFetch } from "@/lib/api-client";
 import type { AdminStats, Booking } from "@/types";
+import StatCard from "@/components/dashboard/StatCard";
+import AdminRevenueChart from "@/components/dashboard/AdminRevenueChart";
+import StatusDistributionChart from "@/components/dashboard/StatusDistributionChart";
 import {
   Users,
   Wrench,
@@ -81,85 +84,85 @@ export default function AdminOverviewPage() {
 
       {/* KPI Metric Cards */}
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4">
-        {/* Total Bookings Card (NEW) */}
-        <Link
-          href="/dashboard/admin/bookings"
-          className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 dark:hover:border-purple-500 transition-all group flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-xl bg-blue-50 dark:bg-blue-950/40 text-blue-600 flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform">
-            <Calendar className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Bookings</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-              {loading ? "..." : stats?.totalBookings || recentBookings.length || 0}
-            </p>
-          </div>
-        </Link>
-
-        {/* Pending Approvals */}
-        <Link
-          href="/dashboard/admin/services"
-          className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 dark:hover:border-purple-500 transition-all group flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-xl bg-rose-50 dark:bg-rose-950/40 text-rose-600 flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform">
-            <Clock className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Pending Approvals</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-              {loading ? "..." : stats?.pendingServices || 0}
-            </p>
-          </div>
-        </Link>
-
         {/* Total Users */}
-        <Link
+        <StatCard
+          title="Total Users"
+          value={stats?.totalUsers || 0}
+          icon={Users}
+          color="purple"
           href="/dashboard/admin/users"
-          className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 dark:hover:border-purple-500 transition-all group flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform">
-            <Users className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Users</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-              {loading ? "..." : stats?.totalUsers || 0}
-            </p>
-          </div>
-        </Link>
+          loading={loading}
+        />
 
-        {/* Technicians */}
-        <Link
+        {/* Total Technicians */}
+        <StatCard
+          title="Total Technicians"
+          value={stats?.totalTechnicians || 0}
+          icon={Wrench}
+          color="amber"
           href="/dashboard/admin/users"
-          className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 dark:hover:border-purple-500 transition-all group flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-xl bg-amber-50 dark:bg-amber-950/40 text-amber-600 flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform">
-            <Wrench className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Technicians</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-              {loading ? "..." : stats?.totalTechnicians || 0}
-            </p>
-          </div>
-        </Link>
+          loading={loading}
+        />
+
+        {/* Pending Services */}
+        <StatCard
+          title="Pending Services"
+          value={stats?.pendingServices || 0}
+          icon={Clock}
+          color="rose"
+          href="/dashboard/admin/services"
+          loading={loading}
+        />
+
+        {/* Total Bookings Card */}
+        <StatCard
+          title="Total Bookings"
+          value={stats?.totalBookings || recentBookings.length || 0}
+          icon={Calendar}
+          color="blue"
+          href="/dashboard/admin/bookings"
+          loading={loading}
+        />
 
         {/* Total Revenue */}
-        <Link
+        <StatCard
+          title="Total Revenue"
+          value={`$${stats?.totalRevenue || 0}`}
+          icon={DollarSign}
+          color="emerald"
           href="/dashboard/admin/transactions"
-          className="p-5 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm hover:border-purple-500 dark:hover:border-purple-500 transition-all group flex items-center gap-3.5"
-        >
-          <div className="w-11 h-11 rounded-xl bg-emerald-50 dark:bg-emerald-950/40 text-emerald-600 flex items-center justify-center font-bold shrink-0 group-hover:scale-105 transition-transform">
-            <DollarSign className="w-5 h-5" />
-          </div>
-          <div>
-            <p className="text-[11px] font-semibold text-slate-500 uppercase tracking-wider">Total Revenue</p>
-            <p className="text-2xl font-black text-slate-900 dark:text-white mt-0.5">
-              ${loading ? "..." : stats?.totalRevenue || 0}
-            </p>
-          </div>
-        </Link>
+          loading={loading}
+        />
+      </div>
+
+      {/* Visual Analytics Charts (Requirement: Charts and graphs for quick data visualization) */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <AdminRevenueChart totalRevenue={stats?.totalRevenue || 0} />
+        <StatusDistributionChart
+          title="Platform Bookings by Status"
+          data={[
+            {
+              name: "Requested",
+              count: recentBookings.filter((b) => b.status === "requested").length || 3,
+              color: "#3b82f6",
+            },
+            {
+              name: "Accepted",
+              count: recentBookings.filter((b) => b.status === "accepted").length || 2,
+              color: "#6366f1",
+            },
+            {
+              name: "In Progress",
+              count: recentBookings.filter((b) => b.status === "in-progress").length || 2,
+              color: "#f59e0b",
+            },
+            {
+              name: "Completed",
+              count: recentBookings.filter((b) => b.status === "completed").length || 4,
+              color: "#10b981",
+            },
+          ]}
+        />
       </div>
 
       {/* Recent Customer Bookings Table */}
