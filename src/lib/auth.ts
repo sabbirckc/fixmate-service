@@ -7,6 +7,13 @@ const uri = process.env.MONGODB_URI || "";
 const client = new MongoClient(uri);
 const db = client.db("fixmate-service");
 
+interface CustomUserData {
+  role?: string;
+  phone?: string;
+  area?: string;
+  bio?: string;
+}
+
 export const auth = betterAuth({
   baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
   database: mongodbAdapter(db),
@@ -24,11 +31,12 @@ export const auth = betterAuth({
     user: {
       create: {
         before: async (user) => {
+          const custom = user as unknown as CustomUserData;
           return {
             data: {
               ...user,
               // Admin cannot be signed up; validate and enforce customer or technician
-              role: (user as any).role === "technician" ? "technician" : "customer",
+              role: custom.role === "technician" ? "technician" : "customer",
             },
           };
         },
@@ -73,16 +81,19 @@ export const auth = betterAuth({
   plugins: [
     jwt({
       jwt: {
-        definePayload: (session) => ({
-          id: session.user.id,
-          email: session.user.email,
-          name: session.user.name,
-          image: session.user.image || "",
-          role: (session.user as any).role || "customer",
-          phone: (session.user as any).phone || "",
-          area: (session.user as any).area || "",
-          bio: (session.user as any).bio || "",
-        }),
+        definePayload: (session) => {
+          const user = session.user as unknown as CustomUserData;
+          return {
+            id: session.user.id,
+            email: session.user.email,
+            name: session.user.name,
+            image: session.user.image || "",
+            role: user.role || "customer",
+            phone: user.phone || "",
+            area: user.area || "",
+            bio: user.bio || "",
+          };
+        },
       },
     }),
   ],

@@ -8,20 +8,14 @@ import { toast } from "sonner";
 import StatusTimeline from "@/components/StatusTimeline";
 import { downloadInvoicePDF } from "@/lib/invoice-pdf";
 import {
-  Calendar,
   CreditCard,
-  XCircle,
   AlertTriangle,
   Loader2,
   Wrench,
-  CheckCircle,
-  ExternalLink,
-  Info,
   ChevronDown,
   ChevronUp,
   Star,
   Download,
-  FileCheck,
 } from "lucide-react";
 
 export default function CustomerBookingsPage() {
