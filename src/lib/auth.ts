@@ -1,11 +1,34 @@
 import { betterAuth } from "better-auth";
 import { mongodbAdapter } from "better-auth/adapters/mongodb";
 import { jwt } from "better-auth/plugins";
-import { MongoClient } from "mongodb";
+import { MongoClient, Db } from "mongodb";
 
-const uri = process.env.MONGODB_URI || "";
-const client = new MongoClient(uri);
-const db = client.db("fixmate-service");
+declare global {
+  var _mongoClient: MongoClient | undefined;
+}
+
+function getMongoClient(): MongoClient {
+  const uri = process.env.MONGODB_URI || "";
+  const existingClient = globalThis._mongoClient as any;
+  if (!existingClient || existingClient.topology?.isDestroyed()) {
+    globalThis._mongoClient = new MongoClient(uri, {
+      maxPoolSize: 10,
+      serverSelectionTimeoutMS: 10000,
+      connectTimeoutMS: 15000,
+      socketTimeoutMS: 45000,
+    });
+  }
+  return globalThis._mongoClient!;
+}
+
+const dbProxy = new Proxy({} as Db, {
+  get(_target, prop) {
+    const client = getMongoClient();
+    const db = client.db("fixmate-service");
+    const val = (db as any)[prop];
+    return typeof val === "function" ? val.bind(db) : val;
+  },
+});
 
 interface CustomUserData {
   role?: string;
@@ -14,9 +37,27 @@ interface CustomUserData {
   bio?: string;
 }
 
+const getBaseURL = () => {
+  if (process.env.BETTER_AUTH_URL) return process.env.BETTER_AUTH_URL;
+  if (process.env.NEXT_PUBLIC_BETTER_AUTH_URL && !process.env.NEXT_PUBLIC_BETTER_AUTH_URL.includes("localhost")) {
+    return process.env.NEXT_PUBLIC_BETTER_AUTH_URL;
+  }
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) {
+    return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}`;
+  }
+  if (process.env.VERCEL_URL) {
+    return `https://${process.env.VERCEL_URL}`;
+  }
+  if (process.env.NODE_ENV === "production") {
+    return "https://fixmate-service.vercel.app";
+  }
+  return process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000";
+};
+
 export const auth = betterAuth({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
-  database: mongodbAdapter(db),
+  baseURL: getBaseURL(),
+  secret: process.env.BETTER_AUTH_SECRET,
+  database: mongodbAdapter(dbProxy, { transaction: false }),
   emailAndPassword: {
     enabled: true,
     requireEmailVerification: false,
@@ -73,8 +114,10 @@ export const auth = betterAuth({
   },
   trustedOrigins: [
     "http://localhost:3000",
-    process.env.NEXT_PUBLIC_SERVER_URL,
     "https://fixmate-service.vercel.app",
+    "https://*.vercel.app",
+    "https://fixmate-service-server.vercel.app",
+    process.env.NEXT_PUBLIC_SERVER_URL,
     process.env.NEXT_PUBLIC_BETTER_AUTH_URL,
     process.env.CLIENT_URL,
   ].filter(Boolean) as string[],

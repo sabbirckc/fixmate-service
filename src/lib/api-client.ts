@@ -1,4 +1,10 @@
-const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || "http://localhost:5000";
+const DEFAULT_SERVER_URL = "https://fixmate-service-server.vercel.app";
+const SERVER_URL =
+  process.env.NEXT_PUBLIC_SERVER_URL && !process.env.NEXT_PUBLIC_SERVER_URL.includes("localhost:5000")
+    ? process.env.NEXT_PUBLIC_SERVER_URL
+    : (typeof window !== "undefined" && window.location.hostname !== "localhost"
+        ? DEFAULT_SERVER_URL
+        : process.env.NEXT_PUBLIC_SERVER_URL || DEFAULT_SERVER_URL);
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;

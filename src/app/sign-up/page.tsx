@@ -42,9 +42,13 @@ export default function SignUpPage() {
   const handleGoogleSignUp = async () => {
     try {
       setLoading(true);
+      const targetDashboard = role === "technician" ? "/dashboard/technician" : "/dashboard/customer";
+      if (typeof window !== "undefined") {
+        localStorage.setItem("fixmate_selected_role", role);
+      }
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard/customer",
+        callbackURL: targetDashboard,
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign up with Google");
@@ -82,7 +86,7 @@ export default function SignUpPage() {
       });
 
       if (error) {
-        toast.error(error.message || "Failed to create account. Email may already be in use.");
+        toast.error(error.message || "Failed to create account. Please check your credentials or try another email.");
         setLoading(false);
         return;
       }

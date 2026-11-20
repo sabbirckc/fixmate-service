@@ -1,8 +1,15 @@
 import { createAuthClient } from "better-auth/react"
 import { jwtClient } from "better-auth/client/plugins"
 
+const getClientBaseURL = () => {
+  if (typeof window !== "undefined") {
+    return window.location.origin;
+  }
+  return process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "https://fixmate-service.vercel.app";
+};
+
 export const authClient = createAuthClient({
-  baseURL: process.env.NEXT_PUBLIC_BETTER_AUTH_URL || "http://localhost:3000",
+  baseURL: getClientBaseURL(),
   plugins: [jwtClient()],
 })
 
