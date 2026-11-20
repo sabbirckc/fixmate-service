@@ -1,10 +1,5 @@
 const DEFAULT_SERVER_URL = "https://fixmate-service-server.vercel.app";
-const SERVER_URL =
-  process.env.NEXT_PUBLIC_SERVER_URL && !process.env.NEXT_PUBLIC_SERVER_URL.includes("localhost:5000")
-    ? process.env.NEXT_PUBLIC_SERVER_URL
-    : (typeof window !== "undefined" && window.location.hostname !== "localhost"
-        ? DEFAULT_SERVER_URL
-        : process.env.NEXT_PUBLIC_SERVER_URL || DEFAULT_SERVER_URL);
+const SERVER_URL = process.env.NEXT_PUBLIC_SERVER_URL || DEFAULT_SERVER_URL;
 
 interface FetchOptions extends RequestInit {
   params?: Record<string, string | number | boolean | undefined>;
@@ -73,17 +68,31 @@ export async function refreshAuthToken(): Promise<string | null> {
       }
 
       // Request fresh Express JWT token signed with server's JWT_SECRET
-      const res = await fetch(`${SERVER_URL}/api/auth/jwt`, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          email: user.email,
-          name: user.name,
-          role: (user as any).role || "customer",
-        }),
+      let data: any = null;
+      const jwtPayload = JSON.stringify({
+        email: user.email,
+        name: user.name,
+        role: (user as any).role || "customer",
       });
 
-      const data = await res.json().catch(() => null);
+      try {
+        const res = await fetch(`${SERVER_URL}/api/auth/jwt`, {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: jwtPayload,
+        });
+        data = await res.json().catch(() => null);
+      } catch {
+        // Fallback to live server if local server is unreachable
+        if (SERVER_URL !== DEFAULT_SERVER_URL) {
+          const res = await fetch(`${DEFAULT_SERVER_URL}/api/auth/jwt`, {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: jwtPayload,
+          }).catch(() => null);
+          data = res ? await res.json().catch(() => null) : null;
+        }
+      }
       if (data?.success && data?.token) {
         setStoredToken(data.token);
         return data.token as string;
@@ -144,7 +153,8 @@ export async function apiFetch<T = any>(endpoint: string, options: FetchOptions 
     authHeaders["Authorization"] = `Bearer ${activeToken}`;
   }
 
-  const res = await fetch(url, {
+  let res: Response;
+  const fetchConfig: RequestInit = {
     ...restOptions,
     headers: {
       "Content-Type": "application/json",
@@ -152,7 +162,19 @@ export async function apiFetch<T = any>(endpoint: string, options: FetchOptions 
       ...headers,
     },
     credentials: "include",
-  });
+  };
+
+  try {
+    res = await fetch(url, fetchConfig);
+  } catch (netErr) {
+    // If local server is not running, seamlessly fallback to live cloud server
+    if (url.includes("localhost:5000")) {
+      const fallbackUrl = url.replace("http://localhost:5000", DEFAULT_SERVER_URL);
+      res = await fetch(fallbackUrl, fetchConfig);
+    } else {
+      throw netErr;
+    }
+  }
 
   // Handle 401 Unauthorized or 403 Forbidden with automatic transparent token refresh and retry
   if ((res.status === 401 || res.status === 403) && !_isRetry && typeof window !== "undefined") {
