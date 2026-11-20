@@ -143,7 +143,10 @@ export default function RootLayout({
           }}
         />
       </head>
-      <body className={`${inter.className} font-sans min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors`}>
+      <body
+        suppressHydrationWarning
+        className={`${inter.className} font-sans min-h-full flex flex-col bg-slate-50 text-slate-900 dark:bg-zinc-950 dark:text-zinc-100 transition-colors`}
+      >
         {children}
         <Toaster position="top-right" richColors />
       </body>
