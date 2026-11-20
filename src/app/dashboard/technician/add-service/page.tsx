@@ -110,7 +110,6 @@ export default function AddServicePage() {
       toast.loading("Uploading image to ImgBB...", { id: "img-upload" });
       const uploadedUrl = await uploadImage(file);
       setImageUrl(uploadedUrl);
-      console.log("Uploaded Image URL:", uploadedUrl);
       toast.success("Image uploaded successfully!", { id: "img-upload" });
     } catch (error: any) {
       console.error(error);

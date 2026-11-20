@@ -104,7 +104,6 @@ export default function ProfilePage() {
       toast.loading("Uploading photo to ImgBB...", { id: "profile-upload" });
       const uploadedUrl = await uploadImage(file);
       setImage(uploadedUrl);
-      console.log("Uploaded Image URL:", uploadedUrl);
       toast.success("Photo uploaded to ImgBB successfully!", { id: "profile-upload" });
     } catch (error: any) {
       console.error(error);

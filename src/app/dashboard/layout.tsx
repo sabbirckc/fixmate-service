@@ -469,7 +469,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
                 <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-slate-200 dark:border-zinc-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {user.name}
+                      {displayName}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mb-1.5">
                       {user.email}
