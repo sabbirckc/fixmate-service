@@ -122,8 +122,17 @@ export default function SignUpPage() {
 
   if (isPending || session?.user) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-500">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 px-4 py-8 sm:py-12 animate-pulse">
+        <div className="w-full max-w-md bg-white dark:bg-zinc-900 rounded-3xl shadow-xl border border-slate-200 dark:border-zinc-800 p-8 space-y-6">
+          <div className="w-12 h-12 rounded-2xl bg-blue-100 dark:bg-blue-950 mx-auto" />
+          <div className="h-6 w-44 bg-slate-200 dark:bg-zinc-800 rounded-lg mx-auto" />
+          <div className="space-y-4 pt-2">
+            <div className="h-11 w-full bg-slate-100 dark:bg-zinc-800 rounded-xl" />
+            <div className="h-11 w-full bg-slate-100 dark:bg-zinc-800 rounded-xl" />
+            <div className="h-11 w-full bg-slate-100 dark:bg-zinc-800 rounded-xl" />
+            <div className="h-11 w-full bg-blue-100 dark:bg-blue-950/60 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }

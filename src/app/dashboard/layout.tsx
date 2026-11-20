@@ -149,8 +149,36 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   if (isPending) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-slate-50 dark:bg-zinc-950 text-slate-500">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-2" />
+      <div className="min-h-screen bg-slate-50 dark:bg-zinc-950 text-slate-900 dark:text-zinc-100 flex animate-pulse">
+        {/* Skeleton Sidebar for Desktop */}
+        <aside className="hidden lg:flex lg:flex-col lg:w-64 bg-white dark:bg-zinc-900 border-r border-slate-200 dark:border-zinc-800 fixed inset-y-0 z-40 p-6 space-y-6">
+          <div className="h-9 w-32 bg-slate-200 dark:bg-zinc-800 rounded-xl" />
+          <div className="h-16 w-full bg-slate-100 dark:bg-zinc-800/60 rounded-2xl" />
+          <div className="space-y-3 pt-4">
+            <div className="h-10 w-full bg-slate-100 dark:bg-zinc-800/40 rounded-xl" />
+            <div className="h-10 w-full bg-slate-100 dark:bg-zinc-800/40 rounded-xl" />
+            <div className="h-10 w-full bg-slate-100 dark:bg-zinc-800/40 rounded-xl" />
+          </div>
+        </aside>
+
+        {/* Skeleton Main Area */}
+        <div className="flex-1 lg:pl-64 flex flex-col min-w-0">
+          <header className="h-16 sm:h-18 bg-white/80 dark:bg-zinc-900/80 border-b border-slate-200 dark:border-zinc-800 flex items-center justify-between px-4 sm:px-8">
+            <div className="h-5 w-32 bg-slate-200 dark:bg-zinc-800 rounded-lg" />
+            <div className="flex items-center gap-3">
+              <div className="w-9 h-9 rounded-xl bg-slate-200 dark:bg-zinc-800" />
+              <div className="w-24 h-5 bg-slate-200 dark:bg-zinc-800 rounded-lg hidden sm:block" />
+            </div>
+          </header>
+          <main className="flex-1 p-4 sm:p-6 lg:p-8 max-w-7xl w-full mx-auto space-y-6">
+            <div className="h-36 w-full bg-slate-200 dark:bg-zinc-800 rounded-3xl" />
+            <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+              <div className="h-28 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl" />
+              <div className="h-28 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl" />
+              <div className="h-28 bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 rounded-2xl" />
+            </div>
+          </main>
+        </div>
       </div>
     );
   }

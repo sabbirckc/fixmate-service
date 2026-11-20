@@ -195,9 +195,22 @@ export default function MyServicesPage() {
       {/* Services Table */}
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm overflow-hidden">
         {loading ? (
-          <div className="py-20 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-amber-600 mb-2" />
-            <p className="text-xs font-semibold">Loading your services...</p>
+          <div className="p-6 space-y-4 animate-pulse">
+            {[...Array(3)].map((_, i) => (
+              <div
+                key={i}
+                className="p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/40 border border-slate-100 dark:border-zinc-800/80 flex items-center justify-between gap-4"
+              >
+                <div className="flex items-center gap-3 flex-1">
+                  <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-zinc-800 shrink-0" />
+                  <div className="space-y-1.5 flex-1">
+                    <div className="h-4 w-44 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+                    <div className="h-3 w-28 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                  </div>
+                </div>
+                <div className="h-7 w-20 bg-slate-200 dark:bg-zinc-800 rounded-lg shrink-0" />
+              </div>
+            ))}
           </div>
         ) : services.length > 0 ? (
           <>

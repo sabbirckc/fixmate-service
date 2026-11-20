@@ -275,9 +275,28 @@ function BrowseServicesContent() {
 
         {/* Services Grid or Loading / Empty State */}
         {loading ? (
-          <div className="py-24 flex flex-col items-center justify-center text-slate-400">
-            <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
-            <p className="text-sm font-medium">Filtering services from server...</p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6 animate-pulse">
+            {[...Array(6)].map((_, i) => (
+              <div
+                key={i}
+                className="rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200/90 dark:border-zinc-800 overflow-hidden shadow-sm"
+              >
+                <div className="aspect-16/10 w-full bg-slate-200 dark:bg-zinc-800" />
+                <div className="p-5 space-y-3">
+                  <div className="h-5 w-3/4 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+                  <div className="h-3 w-full bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                  <div className="h-3 w-2/3 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                  <div className="py-2.5 border-y border-slate-100 dark:border-zinc-800/80 space-y-2">
+                    <div className="h-3 w-1/2 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                    <div className="h-3 w-2/3 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                  </div>
+                  <div className="pt-2 flex items-center justify-between">
+                    <div className="h-6 w-16 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+                    <div className="h-8 w-24 bg-blue-100 dark:bg-blue-950/60 rounded-xl" />
+                  </div>
+                </div>
+              </div>
+            ))}
           </div>
         ) : services.length > 0 ? (
           <div className="space-y-6">

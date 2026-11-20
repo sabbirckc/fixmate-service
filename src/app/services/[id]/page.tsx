@@ -161,10 +161,31 @@ export default function ServiceDetailsPage() {
     return (
       <div className="flex flex-col min-h-screen bg-slate-50 dark:bg-zinc-950">
         <Navbar />
-        <div className="flex-1 flex flex-col items-center justify-center py-32 text-slate-400">
-          <Loader2 className="w-8 h-8 animate-spin text-blue-600 mb-3" />
-          <p className="text-sm font-medium">Loading service specifications...</p>
-        </div>
+        <main className="flex-1 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 sm:py-12 w-full animate-pulse">
+          <div className="h-4 w-32 bg-slate-200 dark:bg-zinc-800 rounded-md mb-6" />
+          <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
+            <div className="lg:col-span-8 space-y-6">
+              <div className="aspect-16/10 rounded-3xl bg-slate-200 dark:bg-zinc-800 w-full" />
+              <div className="space-y-3">
+                <div className="h-8 w-3/4 bg-slate-200 dark:bg-zinc-800 rounded-xl" />
+                <div className="h-4 w-1/2 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+              </div>
+              <div className="h-48 rounded-2xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 p-6 space-y-3">
+                <div className="h-5 w-40 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+                <div className="h-3 w-full bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                <div className="h-3 w-5/6 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                <div className="h-3 w-4/6 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+              </div>
+            </div>
+            <div className="lg:col-span-4">
+              <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-xl space-y-6">
+                <div className="h-5 w-24 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+                <div className="h-10 w-36 bg-slate-200 dark:bg-zinc-800 rounded-xl" />
+                <div className="h-12 w-full bg-blue-100 dark:bg-blue-950/60 rounded-xl" />
+              </div>
+            </div>
+          </div>
+        </main>
         <Footer />
       </div>
     );

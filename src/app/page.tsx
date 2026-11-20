@@ -131,21 +131,15 @@ export default async function HomePage() {
                 Connect with certified local experts for smartphones, laptops, ACs, refrigerators, TVs, and appliances. Track every step from request to completion — and <strong>pay only after the job is completed</strong>.
               </p>
 
-              {/* Action Buttons */}
+              {/* Action Button */}
               <div className="flex flex-col sm:flex-row items-center justify-center lg:justify-start gap-3.5 pt-2">
                 <Link
                   href="/services"
-                  className="w-full sm:w-auto px-7 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
+                  className="w-full sm:w-auto px-8 py-3.5 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold shadow-lg shadow-blue-500/25 transition-all flex items-center justify-center gap-2.5 cursor-pointer"
                 >
                   <Search className="w-4 h-4" />
                   <span>Browse All Services</span>
                   <ArrowRight className="w-4 h-4" />
-                </Link>
-                <Link
-                  href="/sign-up"
-                  className="w-full sm:w-auto px-6 py-3.5 rounded-xl bg-white dark:bg-zinc-900 hover:bg-slate-50 dark:hover:bg-zinc-800 text-slate-800 dark:text-zinc-200 font-semibold border border-slate-200 dark:border-zinc-800 shadow-sm transition-all text-center"
-                >
-                  Join as Technician
                 </Link>
               </div>
 

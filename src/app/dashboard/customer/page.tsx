@@ -136,8 +136,19 @@ export default function CustomerOverviewPage() {
         </div>
 
         {loading ? (
-          <div className="py-12 flex justify-center text-slate-400">
-            <Loader2 className="w-6 h-6 animate-spin text-blue-600" />
+          <div className="divide-y divide-slate-100 dark:divide-zinc-800 animate-pulse">
+            {[...Array(3)].map((_, i) => (
+              <div key={i} className="py-3.5 flex items-center justify-between gap-3">
+                <div className="flex items-center gap-3">
+                  <div className="w-12 h-12 rounded-xl bg-slate-200 dark:bg-zinc-800 shrink-0" />
+                  <div className="space-y-1.5">
+                    <div className="h-4 w-48 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+                    <div className="h-3 w-32 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+                  </div>
+                </div>
+                <div className="h-7 w-20 bg-slate-200 dark:bg-zinc-800 rounded-lg shrink-0" />
+              </div>
+            ))}
           </div>
         ) : bookings.length > 0 ? (
           <div className="divide-y divide-slate-100 dark:divide-zinc-800">

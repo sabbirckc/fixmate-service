@@ -152,18 +152,12 @@ export default function AboutPage() {
           <p className="text-slate-400 text-sm max-w-lg mx-auto">
             Book certified repairs for your phone, PC, AC, or appliance in 2 minutes. Pay only after work is done.
           </p>
-          <div className="flex justify-center gap-3 pt-2">
+          <div className="flex justify-center pt-2">
             <Link
               href="/services"
               className="px-6 py-3 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs shadow-md"
             >
               Browse Services
-            </Link>
-            <Link
-              href="/sign-up"
-              className="px-6 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-xs border border-slate-700"
-            >
-              Join as Technician
             </Link>
           </div>
         </div>

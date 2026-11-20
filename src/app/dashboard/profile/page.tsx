@@ -186,8 +186,25 @@ export default function ProfilePage() {
 
   if (loading) {
     return (
-      <div className="py-24 flex justify-center text-slate-400">
-        <Loader2 className="w-8 h-8 animate-spin text-blue-600" />
+      <div className="max-w-3xl mx-auto space-y-6 animate-pulse">
+        <div className="space-y-2">
+          <div className="h-7 w-44 bg-slate-200 dark:bg-zinc-800 rounded-lg" />
+          <div className="h-4 w-72 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+        </div>
+        <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8 space-y-6">
+          <div className="flex items-center gap-6 pb-6 border-b border-slate-100 dark:border-zinc-800">
+            <div className="w-24 h-24 rounded-3xl bg-slate-200 dark:bg-zinc-800" />
+            <div className="space-y-2">
+              <div className="h-5 w-36 bg-slate-200 dark:bg-zinc-800 rounded-md" />
+              <div className="h-3 w-48 bg-slate-100 dark:bg-zinc-800/60 rounded-md" />
+            </div>
+          </div>
+          <div className="space-y-4">
+            <div className="h-11 w-full bg-slate-100 dark:bg-zinc-800/60 rounded-xl" />
+            <div className="h-11 w-full bg-slate-100 dark:bg-zinc-800/60 rounded-xl" />
+            <div className="h-24 w-full bg-slate-100 dark:bg-zinc-800/60 rounded-xl" />
+          </div>
+        </div>
       </div>
     );
   }
