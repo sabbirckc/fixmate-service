@@ -154,8 +154,8 @@ export async function apiFetch<T = any>(endpoint: string, options: FetchOptions 
     credentials: "include",
   });
 
-  // Handle 401 Unauthorized (expired or invalid token) with automatic transparent retry
-  if (res.status === 401 && !_isRetry && typeof window !== "undefined") {
+  // Handle 401 Unauthorized or 403 Forbidden with automatic transparent token refresh and retry
+  if ((res.status === 401 || res.status === 403) && !_isRetry && typeof window !== "undefined") {
     removeStoredToken();
     const freshToken = await refreshAuthToken();
     if (freshToken) {

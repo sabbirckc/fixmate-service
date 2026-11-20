@@ -34,7 +34,7 @@ export default function AdminUsersPage() {
   }, []);
 
   const handleRoleChange = async (userId: string, newRole: Role, userEmail: string) => {
-    if (userEmail === currentAdminEmail) {
+    if (userEmail.toLowerCase() === currentAdminEmail?.toLowerCase()) {
       toast.error("Administrators cannot change their own role.");
       return;
     }
@@ -43,13 +43,17 @@ export default function AdminUsersPage() {
     try {
       const res = await apiFetch(`/api/admin/users/${userId}/role`, {
         method: "PATCH",
-        body: JSON.stringify({ role: newRole }),
+        body: JSON.stringify({ role: newRole, email: userEmail }),
       });
 
       if (res.success) {
         toast.success(`Role updated to '${newRole}'`);
         setUsers((prev) =>
-          prev.map((u) => ((u._id || u.id) === userId ? { ...u, role: newRole } : u))
+          prev.map((u) =>
+            u.email?.toLowerCase() === userEmail.toLowerCase() || (u._id || u.id) === userId
+              ? { ...u, role: newRole }
+              : u
+          )
         );
       }
     } catch (err: any) {
