@@ -28,19 +28,31 @@ export function removeStoredToken(): void {
 /**
  * Checks if a JWT token is missing, malformed, or expired (with 30s buffer)
  */
-export function isTokenExpired(token: string | null): boolean {
+export function isTokenExpired(token: string | null, expectedEmail?: string): boolean {
   if (!token) return true;
   try {
     const parts = token.split(".");
     if (parts.length !== 3) return true;
     const payload = JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
     if (!payload.email || !payload.email.includes("@")) return true;
+    if (expectedEmail && payload.email.toLowerCase() !== expectedEmail.toLowerCase()) return true;
     if (payload.exp && typeof payload.exp === "number") {
       return Date.now() >= (payload.exp * 1000) - 30000;
     }
     return false;
   } catch {
     return true;
+  }
+}
+
+export function getTokenPayload(token: string | null): any {
+  if (!token) return null;
+  try {
+    const parts = token.split(".");
+    if (parts.length !== 3) return null;
+    return JSON.parse(atob(parts[1].replace(/-/g, "+").replace(/_/g, "/")));
+  } catch {
+    return null;
   }
 }
 

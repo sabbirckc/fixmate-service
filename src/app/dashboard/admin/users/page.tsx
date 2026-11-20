@@ -39,9 +39,10 @@ export default function AdminUsersPage() {
       return;
     }
 
-    setUpdatingId(userId);
+    const targetId = userId || "by-email";
+    setUpdatingId(targetId);
     try {
-      const res = await apiFetch(`/api/admin/users/${userId}/role`, {
+      const res = await apiFetch(`/api/admin/users/${targetId}/role`, {
         method: "PATCH",
         body: JSON.stringify({ role: newRole, email: userEmail }),
       });
@@ -55,6 +56,8 @@ export default function AdminUsersPage() {
               : u
           )
         );
+        // Refresh users list in background to ensure sync
+        fetchUsers();
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to update user role");

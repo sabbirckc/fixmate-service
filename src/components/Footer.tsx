@@ -1,6 +1,7 @@
 "use client";
 
 import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { Wrench, Mail, Phone, MapPin, Globe } from "lucide-react";
 
 // Modern Social SVG icons
@@ -29,6 +30,17 @@ function LinkedinIcon({ className = "w-4 h-4" }: { className?: string }) {
 }
 
 export default function Footer() {
+  const pathname = usePathname();
+
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  };
+
   const categories = [
     { name: "Smartphone Repair", href: "/services?category=Smartphone" },
     { name: "Laptop & PC Servicing", href: "/services?category=Laptop+%26+PC" },
@@ -53,7 +65,7 @@ export default function Footer() {
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-10">
           {/* Brand Info */}
           <div className="lg:col-span-2 space-y-4">
-            <Link href="/" className="inline-flex items-center gap-2.5">
+            <Link href="/" onClick={handleHomeClick} className="inline-flex items-center gap-2.5">
               <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20">
                 <Wrench className="w-5 h-5" />
               </div>
@@ -112,7 +124,11 @@ export default function Footer() {
             <ul className="space-y-2.5 text-sm">
               {quickLinks.map((link) => (
                 <li key={link.name}>
-                  <Link href={link.href} className="hover:text-white transition-colors">
+                  <Link
+                    href={link.href}
+                    onClick={link.href === "/" ? handleHomeClick : undefined}
+                    className="hover:text-white transition-colors"
+                  >
                     {link.name}
                   </Link>
                 </li>

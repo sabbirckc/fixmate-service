@@ -99,11 +99,27 @@ export default function Navbar() {
     { name: "How It Works / About", href: "/about" },
   ];
 
+  const handleHomeClick = (e: React.MouseEvent) => {
+    if (pathname === "/") {
+      e.preventDefault();
+      window.scrollTo({ top: 0, behavior: "smooth" });
+    } else {
+      window.scrollTo({ top: 0, behavior: "instant" });
+    }
+  };
+
   return (
     <header className="sticky top-0 z-50 w-full backdrop-blur-md bg-white/90 dark:bg-zinc-950/90 border-b border-slate-200/80 dark:border-zinc-800/80 transition-colors">
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-18 flex items-center justify-between">
         {/* Logo */}
-        <Link href="/" className="flex items-center gap-2.5 group">
+        <Link
+          href="/"
+          onClick={(e) => {
+            handleHomeClick(e);
+            setMobileMenuOpen(false);
+          }}
+          className="flex items-center gap-2.5 group"
+        >
           <div className="w-10 h-10 rounded-xl bg-blue-600 text-white flex items-center justify-center shadow-md shadow-blue-500/20 group-hover:scale-105 transition-transform">
             <Wrench className="w-5 h-5" />
           </div>
@@ -120,6 +136,7 @@ export default function Navbar() {
               <Link
                 key={link.href}
                 href={link.href}
+                onClick={link.href === "/" ? handleHomeClick : undefined}
                 className={`px-3.5 py-2 rounded-lg text-sm font-medium transition-colors ${
                   isActive
                     ? "text-blue-600 dark:text-blue-400 bg-blue-50/70 dark:bg-blue-950/40 font-semibold"
@@ -243,6 +260,12 @@ export default function Navbar() {
                 <Link
                   key={link.href}
                   href={link.href}
+                  onClick={(e) => {
+                    if (link.href === "/") {
+                      handleHomeClick(e);
+                    }
+                    setMobileMenuOpen(false);
+                  }}
                   className={`block px-3.5 py-2.5 rounded-xl text-base font-medium transition-colors ${
                     isActive
                       ? "text-blue-600 dark:text-blue-400 bg-blue-50 dark:bg-blue-950/40 font-semibold"
