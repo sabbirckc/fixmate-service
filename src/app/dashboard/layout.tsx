@@ -39,22 +39,43 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [profileRole, setProfileRole] = useState<Role | null>(null);
+  const [profileUser, setProfileUser] = useState<any>(null);
 
-  // Sync real-time role from backend database
+  // Sync real-time role and user profile details from backend database
   useEffect(() => {
-    if (session?.user?.email) {
-      apiFetch("/api/users/profile")
-        .then((res) => {
-          if (res?.success && res?.user?.role) {
-            setProfileRole(res.user.role as Role);
-          }
-        })
-        .catch(() => {});
-    }
+    const fetchLatestProfile = () => {
+      if (session?.user?.email) {
+        apiFetch("/api/users/profile")
+          .then((res) => {
+            if (res?.success && res?.user) {
+              setProfileUser(res.user);
+              if (res.user.role) {
+                setProfileRole(res.user.role as Role);
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    fetchLatestProfile();
+
+    const handleProfileUpdated = (e: any) => {
+      if (e.detail) {
+        setProfileUser((prev: any) => ({ ...prev, ...e.detail }));
+      } else {
+        fetchLatestProfile();
+      }
+    };
+
+    window.addEventListener("fixmate_profile_updated", handleProfileUpdated);
+    return () => window.removeEventListener("fixmate_profile_updated", handleProfileUpdated);
   }, [session?.user?.email]);
 
   const user = session?.user;
-  const userRole = (profileRole || (user as any)?.role || "customer") as Role;
+  const displayName = profileUser?.name || user?.name || "FixMate User";
+  const displayImage = profileUser?.image || user?.image;
+  const userRole = (profileRole || profileUser?.role || (user as any)?.role || "customer") as Role;
 
   // Close dropdown on click outside
   useEffect(() => {
@@ -211,15 +232,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
           className="p-4 mx-3 my-3 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800/80 flex items-center gap-3 hover:border-blue-400 dark:hover:border-blue-500/50 hover:bg-blue-50/40 dark:hover:bg-blue-950/20 transition-all group cursor-pointer"
         >
           <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-sm shrink-0 shadow-sm group-hover:scale-105 transition-transform">
-            {user.image ? (
-              <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+            {displayImage ? (
+              <img src={displayImage} alt={displayName} className="w-full h-full object-cover" />
             ) : (
-              user.name?.charAt(0).toUpperCase() || "U"
+              displayName?.charAt(0).toUpperCase() || "U"
             )}
           </div>
           <div className="min-w-0 flex-1">
             <p className="text-xs font-bold text-slate-900 dark:text-white truncate group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors">
-              {user.name}
+              {displayName}
             </p>
             <div className="mt-0.5">{roleBadge(userRole)}</div>
           </div>
@@ -318,14 +339,14 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
             {/* Mobile User Profile Header */}
             <div className="p-4 mx-3 my-2 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800 flex items-center gap-3">
               <div className="w-10 h-10 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                {user.image ? (
-                  <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                {displayImage ? (
+                  <img src={displayImage} alt={displayName} className="w-full h-full object-cover" />
                 ) : (
-                  user.name?.charAt(0).toUpperCase() || "U"
+                  displayName?.charAt(0).toUpperCase() || "U"
                 )}
               </div>
               <div className="min-w-0 flex-1">
-                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                <p className="text-xs font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
                 <p className="text-[10px] text-slate-400 truncate">{user.email}</p>
                 <div className="mt-1">{roleBadge(userRole)}</div>
               </div>
@@ -425,15 +446,15 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               >
                 <div className="text-right hidden sm:block">
                   <p className="text-xs font-bold text-slate-900 dark:text-white group-hover:text-blue-600 dark:group-hover:text-blue-400 transition-colors leading-tight">
-                    {user.name}
+                    {displayName}
                   </p>
                   <p className="text-[10px] text-slate-400 capitalize">{userRole}</p>
                 </div>
                 <div className="w-9 h-9 rounded-xl overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold text-sm shadow-sm group-hover:scale-105 transition-transform shrink-0">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name} className="w-full h-full object-cover" />
+                  {displayImage ? (
+                    <img src={displayImage} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
-                    user.name?.charAt(0).toUpperCase() || "U"
+                    displayName?.charAt(0).toUpperCase() || "U"
                   )}
                 </div>
                 <ChevronDown

@@ -19,18 +19,37 @@ export default function Navbar() {
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
   const [profileRole, setProfileRole] = useState<Role | null>(null);
+  const [profileUser, setProfileUser] = useState<any>(null);
 
-  // Sync latest role from backend profile
+  // Sync latest role and profile details from backend profile
   useEffect(() => {
-    if (session?.user?.email) {
-      apiFetch("/api/users/profile")
-        .then((res) => {
-          if (res?.success && res?.user?.role) {
-            setProfileRole(res.user.role as Role);
-          }
-        })
-        .catch(() => {});
-    }
+    const fetchLatestProfile = () => {
+      if (session?.user?.email) {
+        apiFetch("/api/users/profile")
+          .then((res) => {
+            if (res?.success && res?.user) {
+              setProfileUser(res.user);
+              if (res.user.role) {
+                setProfileRole(res.user.role as Role);
+              }
+            }
+          })
+          .catch(() => {});
+      }
+    };
+
+    fetchLatestProfile();
+
+    const handleProfileUpdated = (e: any) => {
+      if (e.detail) {
+        setProfileUser((prev: any) => ({ ...prev, ...e.detail }));
+      } else {
+        fetchLatestProfile();
+      }
+    };
+
+    window.addEventListener("fixmate_profile_updated", handleProfileUpdated);
+    return () => window.removeEventListener("fixmate_profile_updated", handleProfileUpdated);
   }, [session?.user?.email]);
 
   // Close dropdown on outside click
@@ -51,7 +70,9 @@ export default function Navbar() {
   }, [pathname]);
 
   const user = session?.user;
-  const userRole = (profileRole || (user as any)?.role || "customer") as Role;
+  const displayName = profileUser?.name || user?.name || "User";
+  const displayImage = profileUser?.image || user?.image;
+  const userRole = (profileRole || profileUser?.role || (user as any)?.role || "customer") as Role;
 
   const getDashboardLink = () => {
     if (userRole === "admin") return "/dashboard/admin";
@@ -160,15 +181,15 @@ export default function Navbar() {
                 className="flex items-center gap-2.5 p-1.5 pl-2.5 rounded-full border border-slate-200 dark:border-zinc-800 hover:border-slate-300 dark:hover:border-zinc-700 bg-white dark:bg-zinc-900 transition-all cursor-pointer shadow-sm"
               >
                 <div className="w-8 h-8 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-950 flex items-center justify-center text-blue-600 font-bold text-sm">
-                  {user.image ? (
-                    <img src={user.image} alt={user.name || "User"} className="w-full h-full object-cover" />
+                  {displayImage ? (
+                    <img src={displayImage} alt={displayName} className="w-full h-full object-cover" />
                   ) : (
-                    user.name?.charAt(0).toUpperCase() || "U"
+                    displayName?.charAt(0).toUpperCase() || "U"
                   )}
                 </div>
                 <div className="text-left hidden lg:block pr-1">
                   <p className="text-xs font-semibold text-slate-800 dark:text-zinc-200 max-w-[110px] truncate">
-                    {user.name}
+                    {displayName}
                   </p>
                 </div>
                 <ChevronDown className="w-4 h-4 text-slate-400 mr-1" />
@@ -179,7 +200,7 @@ export default function Navbar() {
                 <div className="absolute right-0 mt-2 w-64 rounded-2xl bg-white dark:bg-zinc-900 shadow-2xl border border-slate-200 dark:border-zinc-800 py-2 z-50 animate-in fade-in zoom-in-95 duration-150">
                   <div className="px-4 py-3 border-b border-slate-100 dark:border-zinc-800">
                     <p className="text-sm font-semibold text-slate-900 dark:text-white truncate">
-                      {user.name}
+                      {displayName}
                     </p>
                     <p className="text-xs text-slate-500 dark:text-zinc-400 truncate mb-1.5">
                       {user.email}
@@ -283,14 +304,14 @@ export default function Navbar() {
               <div className="space-y-2">
                 <div className="flex items-center gap-3 px-3.5 py-2 rounded-xl bg-slate-50 dark:bg-zinc-900 border border-slate-100 dark:border-zinc-800">
                   <div className="w-10 h-10 rounded-full overflow-hidden bg-blue-100 dark:bg-blue-950 text-blue-600 flex items-center justify-center font-bold shrink-0">
-                    {user.image ? (
-                      <img src={user.image} alt={user.name || "User"} className="w-full h-full object-cover" />
+                    {displayImage ? (
+                      <img src={displayImage} alt={displayName} className="w-full h-full object-cover" />
                     ) : (
-                      user.name?.charAt(0).toUpperCase() || "U"
+                      displayName?.charAt(0).toUpperCase() || "U"
                     )}
                   </div>
                   <div className="min-w-0 flex-1">
-                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{user.name}</p>
+                    <p className="text-sm font-bold text-slate-900 dark:text-white truncate">{displayName}</p>
                     <p className="text-xs text-slate-400 truncate">{user.email}</p>
                     <div className="mt-1">{getRoleBadge(userRole)}</div>
                   </div>

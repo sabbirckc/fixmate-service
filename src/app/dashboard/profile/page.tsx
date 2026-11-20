@@ -1,8 +1,9 @@
 "use client";
 
 import { useState, useEffect, useRef } from "react";
+import { useRouter } from "next/navigation";
 import { authClient } from "@/lib/auth-client";
-import { apiFetch } from "@/lib/api-client";
+import { apiFetch, removeStoredToken, refreshAuthToken } from "@/lib/api-client";
 import { uploadImage } from "@/lib/imgbb";
 import { toast } from "sonner";
 import {
@@ -19,6 +20,7 @@ import {
 } from "lucide-react";
 
 export default function ProfilePage() {
+  const router = useRouter();
   const { data: session } = authClient.useSession();
   const sessionUser = session?.user;
 
@@ -144,7 +146,11 @@ export default function ProfilePage() {
           if (res.user.image) setImage(res.user.image);
         }
 
-        // Also update BetterAuth session so Navbar and Topbar update immediately
+        // 1. Refresh stored JWT token so it carries updated name immediately
+        removeStoredToken();
+        await refreshAuthToken();
+
+        // 2. Also update BetterAuth session so Navbar and Topbar update immediately
         try {
           if ((authClient as any)?.updateUser) {
             await (authClient as any).updateUser({
@@ -156,9 +162,21 @@ export default function ProfilePage() {
           console.warn("BetterAuth updateUser notice:", e);
         }
 
+        // 3. Broadcast profile updated event to Navbar, Sidebar, and Topbar
+        if (typeof window !== "undefined") {
+          window.dispatchEvent(
+            new CustomEvent("fixmate_profile_updated", {
+              detail: res.user || { name: name.trim(), image },
+            })
+          );
+        }
+
         toast.success("Profile updated successfully!", {
-          description: "Your updated information is now active across your account.",
+          description: "Your updated information is now active across all services, bookings, and site navigation.",
         });
+
+        // 4. Trigger router refresh
+        router.refresh();
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");
