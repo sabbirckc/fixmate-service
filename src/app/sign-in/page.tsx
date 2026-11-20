@@ -23,21 +23,16 @@ function SignInContent() {
   useEffect(() => {
     if (!isPending && session?.user) {
       const userRole = (session.user as any)?.role || "customer";
-      const defaultDashboard =
+      const targetDashboard =
         userRole === "admin"
           ? "/dashboard/admin"
           : userRole === "technician"
           ? "/dashboard/technician"
           : "/dashboard/customer";
 
-      const destination =
-        callbackUrl && !callbackUrl.includes("/sign-in") && !callbackUrl.includes("/sign-up")
-          ? callbackUrl
-          : defaultDashboard;
-
-      router.replace(destination);
+      window.location.href = targetDashboard;
     }
-  }, [session, isPending, router, callbackUrl]);
+  }, [session, isPending]);
 
   const handleSignIn = async (e?: React.FormEvent, customEmail?: string, customPassword?: string) => {
     if (e) e.preventDefault();
@@ -91,23 +86,17 @@ function SignInContent() {
       }
 
       const userRole = (data?.user as any)?.role || "customer";
-      const defaultDashboard =
+      const targetDashboard =
         userRole === "admin"
           ? "/dashboard/admin"
           : userRole === "technician"
           ? "/dashboard/technician"
           : "/dashboard/customer";
 
-      const destination =
-        callbackUrl && !callbackUrl.includes("/sign-in") && !callbackUrl.includes("/sign-up")
-          ? callbackUrl
-          : defaultDashboard;
-
       toast.success(`Welcome back, ${data?.user?.name || "User"}!`);
 
-      // Client-side navigation so the toast notification remains visible
-      router.push(destination);
-      router.refresh();
+      // Directly navigate to dashboard with full page transition
+      window.location.href = targetDashboard;
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred during login.");
     } finally {
@@ -118,14 +107,9 @@ function SignInContent() {
   const handleGoogleSignIn = async () => {
     try {
       setLoading(true);
-      const destination =
-        callbackUrl && !callbackUrl.includes("/sign-in") && !callbackUrl.includes("/sign-up")
-          ? callbackUrl
-          : "/dashboard/customer";
-
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: destination,
+        callbackURL: "/dashboard/customer",
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign in with Google");

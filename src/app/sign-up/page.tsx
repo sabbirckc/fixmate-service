@@ -29,9 +29,9 @@ export default function SignUpPage() {
           : userRole === "technician"
           ? "/dashboard/technician"
           : "/dashboard/customer";
-      router.replace(targetDashboard);
+      window.location.href = targetDashboard;
     }
-  }, [session, isPending, router]);
+  }, [session, isPending]);
 
   // Password validation rules
   const hasMinLength = password.length >= 6;
@@ -119,12 +119,9 @@ export default function SignUpPage() {
 
       toast.success(`Welcome to FixMate, ${name.trim()}! Account created successfully.`);
 
-      // 3. Redirect to designated dashboard
-      if (role === "technician") {
-        router.push("/dashboard/technician");
-      } else {
-        router.push("/dashboard/customer");
-      }
+      // 3. Directly navigate to designated dashboard
+      const targetDashboard = role === "technician" ? "/dashboard/technician" : "/dashboard/customer";
+      window.location.href = targetDashboard;
     } catch (err: any) {
       toast.error(err.message || "Something went wrong during sign up");
     } finally {
