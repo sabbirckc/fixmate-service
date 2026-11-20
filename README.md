@@ -7,8 +7,8 @@ FixMate is an on-demand smart device and home appliance repair service platform 
 [https://fixmate-service.vercel.app](https://fixmate-service.vercel.app)
 
 ## Admin Credentials
-- **Email:** `admin@fixmate.com`
-- **Password:** `Password123`
+- **Email:** `admin@gmail.com`
+- **Password:** `Admin12345`
 
 ## Key Features
 - **Role-Based Authentication & Authorization:** Multi-role access control for Customers, Technicians, and Administrators using BetterAuth and JWT-protected Express routes.
