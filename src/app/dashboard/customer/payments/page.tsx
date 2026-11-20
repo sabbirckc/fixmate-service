@@ -54,53 +54,110 @@ export default function CustomerPaymentsPage() {
             <p className="text-xs font-semibold">Loading payment history...</p>
           </div>
         ) : payments.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
-              <thead>
-                <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 text-slate-500 font-bold uppercase tracking-wider">
-                  <th className="py-4 px-5">Service Title</th>
-                  <th className="py-4 px-4">Technician</th>
-                  <th className="py-4 px-4">Amount Paid</th>
-                  <th className="py-4 px-4">Stripe Transaction ID</th>
-                  <th className="py-4 px-4">Payment Date</th>
-                  <th className="py-4 px-5 text-right">Status</th>
-                </tr>
-              </thead>
-              <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
-                {payments.map((p) => (
-                  <tr key={p._id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
-                    <td className="py-4 px-5 font-bold text-slate-900 dark:text-white">
+          <>
+            {/* Mobile Cards View */}
+            <div className="block sm:hidden divide-y divide-slate-100 dark:divide-zinc-800 p-4 space-y-4">
+              {payments.map((p) => (
+                <div
+                  key={p._id}
+                  className="pt-4 first:pt-0 rounded-2xl bg-slate-50/60 dark:bg-zinc-800/40 p-4 border border-slate-200/80 dark:border-zinc-700/60 space-y-2.5"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-bold text-slate-900 dark:text-white text-sm">
                       {p.serviceTitle}
-                    </td>
-                    <td className="py-4 px-4 text-slate-600 dark:text-zinc-300">
-                      {p.technicianName}
-                    </td>
-                    <td className="py-4 px-4 font-black text-slate-900 dark:text-white text-sm">
-                      ${p.amount} {p.currency.toUpperCase()}
-                    </td>
-                    <td className="py-4 px-4 font-mono text-[11px] text-slate-500">
-                      {p.transactionId}
-                    </td>
-                    <td className="py-4 px-4 text-slate-500">
-                      {new Date(p.paidAt).toLocaleDateString("en-US", {
-                        month: "short",
-                        day: "numeric",
-                        year: "numeric",
-                        hour: "2-digit",
-                        minute: "2-digit",
-                      })}
-                    </td>
-                    <td className="py-4 px-5 text-right">
-                      <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
-                        <CheckCircle className="w-3.5 h-3.5" />
-                        <span>Paid</span>
+                    </p>
+                    <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md text-[10px] font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300 shrink-0">
+                      <CheckCircle className="w-3 h-3" />
+                      <span>Paid</span>
+                    </span>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-2 text-xs pt-1 border-t border-slate-200/60 dark:border-zinc-700/60">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Technician</span>
+                      <span className="font-semibold text-slate-700 dark:text-zinc-300 truncate block">
+                        {p.technicianName}
                       </span>
-                    </td>
+                    </div>
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Amount Paid</span>
+                      <span className="font-black text-slate-900 dark:text-white text-sm">
+                        ${p.amount} {p.currency.toUpperCase()}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="text-[11px] text-slate-500 pt-1 space-y-0.5 border-t border-slate-100 dark:border-zinc-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Date:</span>
+                      <span className="font-medium text-slate-700 dark:text-zinc-300">
+                        {new Date(p.paidAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                        })}
+                      </span>
+                    </div>
+                    <div className="flex items-center justify-between">
+                      <span className="text-slate-400">Txn:</span>
+                      <span className="font-mono text-[10px] text-slate-600 dark:text-zinc-400 truncate max-w-[170px]">
+                        {p.transactionId}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden sm:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
+                <thead>
+                  <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 text-slate-500 font-bold uppercase tracking-wider">
+                    <th className="py-4 px-5">Service Title</th>
+                    <th className="py-4 px-4">Technician</th>
+                    <th className="py-4 px-4">Amount Paid</th>
+                    <th className="py-4 px-4">Stripe Transaction ID</th>
+                    <th className="py-4 px-4">Payment Date</th>
+                    <th className="py-4 px-5 text-right">Status</th>
                   </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
+                </thead>
+                <tbody className="divide-y divide-slate-100 dark:divide-zinc-800">
+                  {payments.map((p) => (
+                    <tr key={p._id} className="hover:bg-slate-50/50 dark:hover:bg-zinc-800/30 transition-colors">
+                      <td className="py-4 px-5 font-bold text-slate-900 dark:text-white">
+                        {p.serviceTitle}
+                      </td>
+                      <td className="py-4 px-4 text-slate-600 dark:text-zinc-300">
+                        {p.technicianName}
+                      </td>
+                      <td className="py-4 px-4 font-black text-slate-900 dark:text-white text-sm">
+                        ${p.amount} {p.currency.toUpperCase()}
+                      </td>
+                      <td className="py-4 px-4 font-mono text-[11px] text-slate-500">
+                        {p.transactionId}
+                      </td>
+                      <td className="py-4 px-4 text-slate-500">
+                        {new Date(p.paidAt).toLocaleDateString("en-US", {
+                          month: "short",
+                          day: "numeric",
+                          year: "numeric",
+                          hour: "2-digit",
+                          minute: "2-digit",
+                        })}
+                      </td>
+                      <td className="py-4 px-5 text-right">
+                        <span className="inline-flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs font-bold bg-emerald-50 text-emerald-700 border border-emerald-200 dark:bg-emerald-950 dark:text-emerald-300">
+                          <CheckCircle className="w-3.5 h-3.5" />
+                          <span>Paid</span>
+                        </span>
+                      </td>
+                    </tr>
+                  ))}
+                </tbody>
+              </table>
+            </div>
+          </>
         ) : (
           <div className="py-20 text-center px-4">
             <CreditCard className="w-12 h-12 text-slate-300 dark:text-zinc-700 mx-auto mb-3" />

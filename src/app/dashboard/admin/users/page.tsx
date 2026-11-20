@@ -84,8 +84,95 @@ export default function AdminUsersPage() {
             <p className="text-xs font-semibold">Loading users...</p>
           </div>
         ) : users.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <>
+            {/* Mobile Cards View */}
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-zinc-800 p-4 space-y-4">
+              {users.map((u) => {
+                const uid = u._id || u.id || "";
+                const isSelf = u.email === currentAdminEmail;
+
+                return (
+                  <div
+                    key={uid || u.email}
+                    className="pt-4 first:pt-0 rounded-2xl bg-slate-50/60 dark:bg-zinc-800/40 p-4 border border-slate-200/80 dark:border-zinc-700/60 space-y-3"
+                  >
+                    <div className="flex items-center gap-3">
+                      <div className="w-11 h-11 rounded-xl overflow-hidden bg-purple-100 dark:bg-purple-950 text-purple-600 flex items-center justify-center font-bold text-sm shrink-0">
+                        {u.image ? (
+                          <img src={u.image} alt={u.name} className="w-full h-full object-cover" />
+                        ) : (
+                          u.name?.charAt(0).toUpperCase()
+                        )}
+                      </div>
+                      <div className="min-w-0 flex-1">
+                        <p className="font-bold text-slate-900 dark:text-white flex items-center gap-1.5 truncate">
+                          <span>{u.name}</span>
+                          {isSelf && (
+                            <span className="px-1.5 py-0.2 rounded text-[9px] bg-purple-100 text-purple-700 font-bold shrink-0">
+                              You
+                            </span>
+                          )}
+                        </p>
+                        <p className="text-[11px] text-slate-400 truncate">{u.email}</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-2 text-xs pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Contact</span>
+                        <span className="text-slate-700 dark:text-zinc-300 font-medium block truncate">
+                          {u.phone || "No phone"}
+                        </span>
+                      </div>
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block">Joined</span>
+                        <span className="text-slate-700 dark:text-zinc-300 font-medium block">
+                          {u.createdAt ? new Date(u.createdAt).toLocaleDateString() : "Active"}
+                        </span>
+                      </div>
+                    </div>
+
+                    <div className="flex items-center justify-between pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                      <div>
+                        <span className="text-[10px] text-slate-400 uppercase font-bold block mb-0.5">Current Role</span>
+                        <span
+                          className={`px-2 py-0.5 rounded-md text-[10px] font-bold uppercase border ${
+                            u.role === "admin"
+                              ? "bg-purple-50 text-purple-700 border-purple-200 dark:bg-purple-950 dark:text-purple-300"
+                              : u.role === "technician"
+                              ? "bg-amber-50 text-amber-700 border-amber-200 dark:bg-amber-950 dark:text-amber-300"
+                              : "bg-blue-50 text-blue-700 border-blue-200 dark:bg-blue-950 dark:text-blue-300"
+                          }`}
+                        >
+                          {u.role}
+                        </span>
+                      </div>
+
+                      <div>
+                        {isSelf ? (
+                          <span className="text-[10px] text-slate-400 italic">Role locked (Self)</span>
+                        ) : (
+                          <select
+                            disabled={updatingId === uid}
+                            value={u.role}
+                            onChange={(e) => handleRoleChange(uid, e.target.value as Role, u.email)}
+                            className="px-2.5 py-1.5 rounded-xl border border-slate-300 dark:border-zinc-700 bg-white dark:bg-zinc-800 text-xs font-semibold focus:ring-2 focus:ring-purple-500 cursor-pointer shadow-sm"
+                          >
+                            <option value="customer">Customer</option>
+                            <option value="technician">Technician</option>
+                            <option value="admin">Admin</option>
+                          </select>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 text-slate-500 font-bold uppercase tracking-wider">
                   <th className="py-4 px-5">User</th>
@@ -170,6 +257,7 @@ export default function AdminUsersPage() {
               </tbody>
             </table>
           </div>
+        </>
         ) : (
           <div className="py-20 text-center px-4">
             <Users className="w-12 h-12 text-slate-300 dark:text-zinc-700 mx-auto mb-3" />

@@ -167,8 +167,131 @@ export default function TechnicianRequestsPage() {
             <p className="text-xs font-semibold">Loading requests...</p>
           </div>
         ) : bookings.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <>
+            {/* Mobile Cards View */}
+            <div className="block lg:hidden divide-y divide-slate-100 dark:divide-zinc-800 p-4 space-y-4">
+              {bookings.map((b) => (
+                <div
+                  key={b._id}
+                  className="pt-4 first:pt-0 rounded-2xl bg-slate-50/60 dark:bg-zinc-800/40 p-4 border border-slate-200/80 dark:border-zinc-700/60 space-y-3"
+                >
+                  <div className="flex items-start justify-between gap-2">
+                    <div>
+                      <p className="font-bold text-slate-900 dark:text-white text-sm">
+                        {b.customerName}
+                      </p>
+                      <p className="text-[11px] text-slate-500 flex items-center gap-1 mt-0.5">
+                        <Phone className="w-3 h-3 text-amber-600" />
+                        <span>{b.customerPhone}</span>
+                      </p>
+                    </div>
+                    <span
+                      className={`px-2.5 py-1 rounded-lg text-xs font-bold border capitalize shrink-0 ${
+                        b.status === "completed"
+                          ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                          : b.status === "in-progress"
+                          ? "bg-amber-50 text-amber-700 border-amber-200"
+                          : b.status === "accepted"
+                          ? "bg-indigo-50 text-indigo-700 border-indigo-200"
+                          : b.status === "cancelled" || b.status === "rejected"
+                          ? "bg-slate-100 text-slate-600 border-slate-200"
+                          : "bg-blue-50 text-blue-700 border-blue-200"
+                      }`}
+                    >
+                      {b.status}
+                    </span>
+                  </div>
+
+                  <div className="space-y-1 text-xs">
+                    <p className="font-bold text-slate-800 dark:text-zinc-200">
+                      {b.serviceTitle}
+                    </p>
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                      <MapPin className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span className="truncate">{b.address}</span>
+                    </p>
+                    <p className="text-[11px] text-slate-500 flex items-center gap-1">
+                      <Calendar className="w-3 h-3 text-slate-400 shrink-0" />
+                      <span>{new Date(b.preferredDate).toLocaleDateString()}</span>
+                    </p>
+                    <div className="pt-1 text-[11px] text-slate-600 dark:text-zinc-400 bg-white/70 dark:bg-zinc-900/70 p-2.5 rounded-xl border border-slate-200/60 dark:border-zinc-800">
+                      <span className="font-semibold text-slate-700 dark:text-zinc-300">Problem:</span> {b.problemDescription}
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Charge</span>
+                      <span className="font-black text-slate-900 dark:text-white">
+                        ${b.finalAmount || b.basePrice} {b.finalAmount ? "(Final)" : "(Base)"}
+                      </span>
+                    </div>
+
+                    {/* Action buttons */}
+                    <div className="flex items-center gap-1.5">
+                      {b.status === "requested" && (
+                        <>
+                          <button
+                            type="button"
+                            disabled={updating}
+                            onClick={() => updateStatus(b._id, "accepted")}
+                            className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm flex items-center gap-1 cursor-pointer"
+                          >
+                            <Check className="w-3 h-3" />
+                            <span>Accept</span>
+                          </button>
+                          <button
+                            type="button"
+                            disabled={updating}
+                            onClick={() => openRejectModal(b)}
+                            className="px-2.5 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-[11px] font-semibold cursor-pointer"
+                          >
+                            <X className="w-3 h-3" />
+                            <span>Reject</span>
+                          </button>
+                        </>
+                      )}
+
+                      {b.status === "accepted" && (
+                        <button
+                          type="button"
+                          disabled={updating}
+                          onClick={() => updateStatus(b._id, "in-progress")}
+                          className="px-3 py-1.5 rounded-lg bg-amber-600 hover:bg-amber-700 text-white font-bold text-[11px] shadow-sm flex items-center gap-1 cursor-pointer"
+                        >
+                          <Play className="w-3 h-3" />
+                          <span>Start Work</span>
+                        </button>
+                      )}
+
+                      {b.status === "in-progress" && (
+                        <button
+                          type="button"
+                          disabled={updating}
+                          onClick={() => openCompleteModal(b)}
+                          className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-[11px] shadow-sm flex items-center gap-1 cursor-pointer"
+                        >
+                          <CheckCircle className="w-3 h-3" />
+                          <span>Complete</span>
+                        </button>
+                      )}
+
+                      {b.status === "completed" && (
+                        <span className={`text-[11px] font-bold uppercase ${
+                          b.paymentStatus === "paid" ? "text-emerald-600" : "text-amber-600"
+                        }`}>
+                          {b.paymentStatus === "paid" ? "Paid" : "Awaiting Payment"}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden lg:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 text-slate-500 font-bold uppercase tracking-wider">
                   <th className="py-4 px-5">Customer & Phone</th>
@@ -309,6 +432,7 @@ export default function TechnicianRequestsPage() {
               </tbody>
             </table>
           </div>
+        </>
         ) : (
           <div className="py-20 text-center px-4">
             <ClipboardList className="w-12 h-12 text-slate-300 dark:text-zinc-700 mx-auto mb-3" />

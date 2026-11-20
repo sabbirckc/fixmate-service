@@ -109,8 +109,96 @@ export default function AdminServicesPage() {
             <p className="text-xs font-semibold">Loading services queue...</p>
           </div>
         ) : services.length > 0 ? (
-          <div className="overflow-x-auto">
-            <table className="w-full text-left border-collapse text-xs">
+          <>
+            {/* Mobile Cards View */}
+            <div className="block md:hidden divide-y divide-slate-100 dark:divide-zinc-800 p-4 space-y-4">
+              {services.map((s) => (
+                <div
+                  key={s._id}
+                  className="pt-4 first:pt-0 rounded-2xl bg-slate-50/60 dark:bg-zinc-800/40 p-4 border border-slate-200/80 dark:border-zinc-700/60 space-y-3"
+                >
+                  <div className="flex items-start gap-3">
+                    <img
+                      src={s.image}
+                      alt={s.title}
+                      className="w-14 h-14 rounded-xl object-cover bg-slate-100 shrink-0"
+                    />
+                    <div className="min-w-0 flex-1">
+                      <p className="font-bold text-slate-900 dark:text-white text-sm line-clamp-1">
+                        {s.title}
+                      </p>
+                      <span className="text-[11px] text-purple-600 dark:text-purple-400 font-semibold block">
+                        {s.category} • {s.serviceMode}
+                      </span>
+                      <p className="text-[11px] text-slate-500 mt-0.5 truncate">
+                        Tech: {s.technicianName}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-between text-xs pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                    <div>
+                      <span className="text-[10px] text-slate-400 uppercase font-bold block">Base Price</span>
+                      <span className="font-black text-slate-900 dark:text-white text-sm">
+                        ${s.basePrice}
+                      </span>
+                    </div>
+
+                    <div>
+                      <span
+                        className={`px-2.5 py-1 rounded-lg text-xs font-bold border capitalize ${
+                          s.approvalStatus === "approved"
+                            ? "bg-emerald-50 text-emerald-700 border-emerald-200"
+                            : s.approvalStatus === "rejected"
+                            ? "bg-rose-50 text-rose-700 border-rose-200"
+                            : "bg-amber-50 text-amber-700 border-amber-200"
+                        }`}
+                      >
+                        {s.approvalStatus}
+                      </span>
+                    </div>
+                  </div>
+
+                  <div className="flex items-center justify-end gap-2 pt-2 border-t border-slate-200/60 dark:border-zinc-700/60">
+                    {s.approvalStatus !== "approved" && (
+                      <button
+                        type="button"
+                        disabled={updatingId === s._id}
+                        onClick={() => handleApproval(s._id, "approved")}
+                        className="px-3 py-1.5 rounded-lg bg-emerald-600 hover:bg-emerald-700 text-white font-bold text-xs shadow-sm flex items-center gap-1 cursor-pointer"
+                      >
+                        <Check className="w-3.5 h-3.5" />
+                        <span>Approve</span>
+                      </button>
+                    )}
+
+                    {s.approvalStatus !== "rejected" && (
+                      <button
+                        type="button"
+                        disabled={updatingId === s._id}
+                        onClick={() => handleApproval(s._id, "rejected")}
+                        className="px-3 py-1.5 rounded-lg border border-rose-200 text-rose-600 hover:bg-rose-50 text-xs font-semibold cursor-pointer"
+                      >
+                        <X className="w-3.5 h-3.5" />
+                        <span>Reject</span>
+                      </button>
+                    )}
+
+                    <Link
+                      href={`/services/${s._id}`}
+                      className="px-2.5 py-1.5 rounded-lg border border-slate-200 dark:border-zinc-700 text-slate-500 hover:text-purple-600 text-xs font-semibold flex items-center gap-1"
+                    >
+                      <ExternalLink className="w-3.5 h-3.5" />
+                      <span>Preview</span>
+                    </Link>
+                  </div>
+                </div>
+              ))}
+            </div>
+
+            {/* Desktop Table View */}
+            <div className="hidden md:block overflow-x-auto">
+              <table className="w-full text-left border-collapse text-xs">
               <thead>
                 <tr className="border-b border-slate-100 dark:border-zinc-800 bg-slate-50/50 dark:bg-zinc-800/40 text-slate-500 font-bold uppercase tracking-wider">
                   <th className="py-4 px-5">Service Title & Image</th>
@@ -210,6 +298,7 @@ export default function AdminServicesPage() {
               </tbody>
             </table>
           </div>
+        </>
         ) : (
           <div className="py-20 text-center px-4">
             <CheckSquare className="w-12 h-12 text-slate-300 dark:text-zinc-700 mx-auto mb-3" />

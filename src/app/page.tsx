@@ -175,7 +175,7 @@ export default async function HomePage() {
                   className="w-full h-80 sm:h-96 object-cover rounded-2xl"
                 />
                 {/* Floating Badge */}
-                <div className="absolute -bottom-4 -left-4 sm:bottom-6 sm:left-6 p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-xl border border-slate-200/90 dark:border-zinc-800 flex items-center gap-3 max-w-xs">
+                <div className="absolute bottom-3 left-3 sm:bottom-6 sm:left-6 p-3.5 sm:p-4 rounded-2xl bg-white/95 dark:bg-zinc-900/95 backdrop-blur-md shadow-xl border border-slate-200/90 dark:border-zinc-800 flex items-center gap-3 max-w-[calc(100%-1.5rem)] sm:max-w-xs">
                   <div className="w-12 h-12 rounded-xl bg-emerald-100 dark:bg-emerald-950 flex items-center justify-center text-emerald-600 shrink-0">
                     <ShieldCheck className="w-6 h-6" />
                   </div>

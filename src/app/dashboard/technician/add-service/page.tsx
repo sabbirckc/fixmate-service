@@ -212,7 +212,7 @@ export default function AddServicePage() {
       <div className="bg-white dark:bg-zinc-900 rounded-3xl border border-slate-200 dark:border-zinc-800 shadow-sm p-6 sm:p-8">
         <form onSubmit={handleSubmit} className="space-y-6">
           {/* Read-only Technician Profile Info */}
-          <div className="grid grid-cols-2 gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800 text-xs">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 sm:gap-4 p-4 rounded-2xl bg-slate-50 dark:bg-zinc-800/60 border border-slate-100 dark:border-zinc-800 text-xs">
             <div>
               <span className="text-slate-400 font-medium block">Technician Name</span>
               <span className="font-bold text-slate-800 dark:text-zinc-200">{user?.name} (Read-only)</span>
