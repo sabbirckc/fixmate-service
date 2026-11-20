@@ -6,7 +6,7 @@ import { usePathname, useRouter } from "next/navigation";
 import { Wrench, Menu, X, LayoutDashboard, UserCheck, LogOut, ChevronDown, Sparkles } from "lucide-react";
 import ThemeToggle from "@/components/ThemeToggle";
 import { authClient } from "@/lib/auth-client";
-import { removeStoredToken } from "@/lib/api-client";
+import { removeStoredToken, apiFetch } from "@/lib/api-client";
 import { toast } from "sonner";
 import type { Role } from "@/types";
 
@@ -18,6 +18,20 @@ export default function Navbar() {
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [profileRole, setProfileRole] = useState<Role | null>(null);
+
+  // Sync latest role from backend profile
+  useEffect(() => {
+    if (session?.user?.email) {
+      apiFetch("/api/users/profile")
+        .then((res) => {
+          if (res?.success && res?.user?.role) {
+            setProfileRole(res.user.role as Role);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [session?.user?.email]);
 
   // Close dropdown on outside click
   useEffect(() => {
@@ -37,7 +51,7 @@ export default function Navbar() {
   }, [pathname]);
 
   const user = session?.user;
-  const userRole = ((user as any)?.role || "customer") as Role;
+  const userRole = (profileRole || (user as any)?.role || "customer") as Role;
 
   const getDashboardLink = () => {
     if (userRole === "admin") return "/dashboard/admin";

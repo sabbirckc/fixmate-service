@@ -38,9 +38,23 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [sidebarOpen, setSidebarOpen] = useState(false);
   const [dropdownOpen, setDropdownOpen] = useState(false);
   const dropdownRef = useRef<HTMLDivElement>(null);
+  const [profileRole, setProfileRole] = useState<Role | null>(null);
+
+  // Sync real-time role from backend database
+  useEffect(() => {
+    if (session?.user?.email) {
+      apiFetch("/api/users/profile")
+        .then((res) => {
+          if (res?.success && res?.user?.role) {
+            setProfileRole(res.user.role as Role);
+          }
+        })
+        .catch(() => {});
+    }
+  }, [session?.user?.email]);
 
   const user = session?.user;
-  const userRole = ((user as any)?.role || "customer") as Role;
+  const userRole = (profileRole || (user as any)?.role || "customer") as Role;
 
   // Close dropdown on click outside
   useEffect(() => {
