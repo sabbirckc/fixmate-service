@@ -19,18 +19,10 @@ function SignInContent() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, redirect directly to their dashboard
+  // If already logged in, redirect directly to the home page
   useEffect(() => {
     if (!isPending && session?.user) {
-      const userRole = (session.user as any)?.role || "customer";
-      const targetDashboard =
-        userRole === "admin"
-          ? "/dashboard/admin"
-          : userRole === "technician"
-          ? "/dashboard/technician"
-          : "/dashboard/customer";
-
-      window.location.href = targetDashboard;
+      window.location.href = "/";
     }
   }, [session, isPending]);
 
@@ -85,18 +77,10 @@ function SignInContent() {
         console.warn("JWT sync warning:", tokenErr);
       }
 
-      const userRole = (data?.user as any)?.role || "customer";
-      const targetDashboard =
-        userRole === "admin"
-          ? "/dashboard/admin"
-          : userRole === "technician"
-          ? "/dashboard/technician"
-          : "/dashboard/customer";
-
       toast.success(`Welcome back, ${data?.user?.name || "User"}!`);
 
-      // Directly navigate to dashboard with full page transition
-      window.location.href = targetDashboard;
+      // Directly navigate to home page upon sign-in
+      window.location.href = "/";
     } catch (err: any) {
       toast.error(err.message || "An unexpected error occurred during login.");
     } finally {
@@ -109,7 +93,7 @@ function SignInContent() {
       setLoading(true);
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: "/dashboard/customer",
+        callbackURL: "/",
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign in with Google");

@@ -19,17 +19,10 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  // If already logged in, redirect directly to their dashboard
+  // If already logged in, redirect directly to the home page
   useEffect(() => {
     if (!isPending && session?.user) {
-      const userRole = (session.user as any)?.role || "customer";
-      const targetDashboard =
-        userRole === "admin"
-          ? "/dashboard/admin"
-          : userRole === "technician"
-          ? "/dashboard/technician"
-          : "/dashboard/customer";
-      window.location.href = targetDashboard;
+      window.location.href = "/";
     }
   }, [session, isPending]);
 
@@ -42,13 +35,12 @@ export default function SignUpPage() {
   const handleGoogleSignUp = async () => {
     try {
       setLoading(true);
-      const targetDashboard = role === "technician" ? "/dashboard/technician" : "/dashboard/customer";
       if (typeof window !== "undefined") {
         localStorage.setItem("fixmate_selected_role", role);
       }
       await authClient.signIn.social({
         provider: "google",
-        callbackURL: targetDashboard,
+        callbackURL: "/",
       });
     } catch (err: any) {
       toast.error(err.message || "Failed to sign up with Google");
@@ -119,9 +111,8 @@ export default function SignUpPage() {
 
       toast.success(`Welcome to FixMate, ${name.trim()}! Account created successfully.`);
 
-      // 3. Directly navigate to designated dashboard
-      const targetDashboard = role === "technician" ? "/dashboard/technician" : "/dashboard/customer";
-      window.location.href = targetDashboard;
+      // 3. Directly navigate to the home page
+      window.location.href = "/";
     } catch (err: any) {
       toast.error(err.message || "Something went wrong during sign up");
     } finally {
