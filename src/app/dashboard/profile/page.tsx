@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { authClient } from "@/lib/auth-client";
 import { apiFetch } from "@/lib/api-client";
 import { uploadImage } from "@/lib/imgbb";
@@ -34,8 +34,12 @@ export default function ProfilePage() {
   const [uploadingImage, setUploadingImage] = useState(false);
   const [saving, setSaving] = useState(false);
   const [loading, setLoading] = useState(true);
+  const hasLoadedRef = useRef(false);
 
   useEffect(() => {
+    // Prevent re-fetching and UI reset when switching tabs or when session updates in-memory
+    if (hasLoadedRef.current) return;
+
     // If sessionUser is already available, eagerly populate known fields
     if (sessionUser) {
       if (sessionUser.email) setEmail(sessionUser.email);
@@ -49,7 +53,6 @@ export default function ProfilePage() {
 
     const fetchProfile = async () => {
       try {
-        setLoading(true);
         const res = await apiFetch("/api/users/profile");
         if (res?.success && res?.user) {
           const u = res.user;
@@ -68,6 +71,7 @@ export default function ProfilePage() {
           setArea(resolvedArea);
           setBio(resolvedBio);
           setImage(resolvedImage);
+          hasLoadedRef.current = true;
         }
       } catch (err) {
         console.warn("Could not fetch remote profile, falling back to session:", err);
@@ -79,6 +83,7 @@ export default function ProfilePage() {
           setArea((sessionUser as any).area || "");
           setBio((sessionUser as any).bio || "");
           setImage(sessionUser.image || null);
+          hasLoadedRef.current = true;
         }
       } finally {
         setLoading(false);
@@ -86,7 +91,7 @@ export default function ProfilePage() {
     };
 
     fetchProfile();
-  }, [sessionUser]);
+  }, [sessionUser?.email]);
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
@@ -154,11 +159,6 @@ export default function ProfilePage() {
         toast.success("Profile updated successfully!", {
           description: "Your updated information is now active across your account.",
         });
-
-        // Trigger BetterAuth session reload so Navbar updates immediately
-        setTimeout(() => {
-          window.location.reload();
-        }, 500);
       }
     } catch (err: any) {
       toast.error(err.message || "Failed to update profile");

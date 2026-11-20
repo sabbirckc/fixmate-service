@@ -11,6 +11,9 @@ const getClientBaseURL = () => {
 export const authClient = createAuthClient({
   baseURL: getClientBaseURL(),
   plugins: [jwtClient()],
+  sessionOptions: {
+    refetchOnWindowFocus: false,
+  },
 })
 
 export const { signIn, signUp, signOut, useSession } = authClient
