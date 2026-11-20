@@ -34,7 +34,7 @@ export default function AdminRevenueChart({ totalRevenue }: AdminRevenueChartPro
   ];
 
   return (
-    <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4">
+    <div className="p-6 rounded-3xl bg-white dark:bg-zinc-900 border border-slate-200 dark:border-zinc-800 shadow-sm space-y-4 min-w-0 overflow-hidden">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-2">
         <div className="flex items-center gap-2.5">
           <div className="w-9 h-9 rounded-xl bg-purple-50 dark:bg-purple-950/40 text-purple-600 flex items-center justify-center">
@@ -55,11 +55,11 @@ export default function AdminRevenueChart({ totalRevenue }: AdminRevenueChartPro
         </div>
       </div>
 
-      <div className="h-[260px] w-full pt-2">
+      <div className="w-full h-[260px] min-h-[260px] min-w-0 pt-2" style={{ width: "100%", height: 260, minHeight: 260 }}>
         {!mounted ? (
           <div className="h-full w-full rounded-2xl bg-slate-50 dark:bg-zinc-800/40 animate-pulse" />
         ) : (
-          <ResponsiveContainer width="100%" height="100%">
+          <ResponsiveContainer width="100%" height={260} minWidth={0} minHeight={260}>
             <AreaChart data={data} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="adminRevenueGrad" x1="0" y1="0" x2="0" y2="1">
